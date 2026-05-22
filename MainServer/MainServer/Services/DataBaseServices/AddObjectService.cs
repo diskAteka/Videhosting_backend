@@ -13,13 +13,13 @@ namespace MainServer.Services.DataBaseServices
             _context = context;
         }
 
-        public AddRezult Add<T>(T table) where T : class, IAddble
+        public async Task<AddRezult> AddAsync<T>(T table) where T : class, IAddble
         {
             try
             {
                 var dbSet = _context.Set<T>();
-                dbSet.Add(table);
-                int affectedRows = _context.SaveChanges();
+                await dbSet.AddAsync(table);
+                int affectedRows = await _context.SaveChangesAsync();
                 return new AddRezult(affectedRows > 0, AffectedTableNames());
             }
             catch (Exception ex)

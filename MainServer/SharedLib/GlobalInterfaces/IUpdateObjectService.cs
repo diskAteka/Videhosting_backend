@@ -4,6 +4,6 @@ namespace SharedLib.GlobalInterfaces
 {
     public interface IUpdateObjectService
     {
-        public UpdateRezult Update<T>(T table) where T : class, IUpdateble;
+        public Task<UpdateRezult> UpdateAsync<T>(T table) where T : class, IUpdateble;
     }
 }

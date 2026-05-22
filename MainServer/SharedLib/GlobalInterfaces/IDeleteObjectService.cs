@@ -6,6 +6,6 @@ namespace SharedLib.GlobalInterfaces
     {
         //Этот интерфейс должен отвечать за удаление любых сущностей в БД
 
-        public DeleteResult Delete<T>(int id) where T : class, IDeleteble;
+        public Task<DeleteResult> DeleteAsync<T>(int id) where T : class, IDeleteble;
     }
 }

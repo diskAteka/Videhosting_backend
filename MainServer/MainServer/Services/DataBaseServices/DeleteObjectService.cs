@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using SharedLib.DTOmodels.RezultModels;
 using SharedLib.GlobalInterfaces;
+using System.Threading.Tasks;
 
 namespace MainServer.Services.DataBaseServices
 {
@@ -13,16 +14,16 @@ namespace MainServer.Services.DataBaseServices
             _context = context;
         }
 
-        public DeleteResult Delete<T>(int id) where T : class, IDeleteble
+        public async Task<DeleteResult> DeleteAsync<T>(int id) where T : class, IDeleteble
         {
             try
             {
                 var dbSet = _context.Set<T>(); //Определяети тип таблицы на лету
-                var entity = dbSet.Find(id);
+                var entity = await dbSet.FindAsync(id);
                 if (entity == null)
                     return new DeleteResult(false, null); //Если сущность не найдена, возвращаем неудачный результат с пустым массивом
                 dbSet.Remove(entity);
-                int affectedRows = _context.SaveChanges();
+                int affectedRows = await _context.SaveChangesAsync();
                 return new DeleteResult(affectedRows > 0, AffectedTableNames()); //Если удаление прошло успешно, возвращаем результат с информацией об измененных таблицах
             }
             catch(Exception ex)

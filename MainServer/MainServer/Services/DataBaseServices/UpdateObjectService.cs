@@ -13,13 +13,13 @@ namespace MainServer.Services.DataBaseServices
             _context = context;
         }
 
-        public UpdateRezult Update<T>(T table) where T : class, IUpdateble //Наследование от IUpdateble гарантирует, что передаваемый объект будет либо Video, либо User, либо Comment
+        public async Task<UpdateRezult> UpdateAsync<T>(T table) where T : class, IUpdateble //Наследование от IUpdateble гарантирует, что передаваемый объект будет либо Video, либо User, либо Comment
         {
             try
             {
                 var dbSet = _context.Set<T>();
-                _context.Entry(table).CurrentValues.SetValues(table);
-                int affectedRows = _context.SaveChanges();
+                dbSet.Update(table);
+                int affectedRows = await _context.SaveChangesAsync();
                 return new UpdateRezult(affectedRows > 0, AffectedTableNames());
             }
             catch (Exception ex)

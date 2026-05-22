@@ -1,6 +1,7 @@
 using MainServer.Data;
 using MainServer.Interfaces;
 using MainServer.Services;
+using MainServer.Services.DataBaseServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http.Features;
@@ -34,6 +35,10 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IStorageService, StorageService>();
 builder.Services.AddScoped<IVideoService, VideoService>();
+builder.Services.AddScoped<IAddObjectService, AddObjectService>();
+builder.Services.AddScoped<IUpdateObjectService,  UpdateObjectService>();
+builder.Services.AddScoped<IGetObjectService, GetObjectSevice>();
+builder.Services.AddScoped<IDeleteObjectService, DeleteObjectService>();
 
 builder.Services.AddScoped<PosterService>();
 

@@ -11,7 +11,7 @@ namespace MainServer.Services.DataBaseServices
         {
             _context = context;
         }
-        public List<T> GetObjects<T>(int from = 0, int to = 10, bool ascending = true) where T : class, IModel
+        public async Task<List<T>> GetObjectsAsync<T>(int from = 0, int to = 10, bool ascending = true) where T : class, IModel
         {
             IQueryable<T>? list = null;
             try
@@ -21,7 +21,7 @@ namespace MainServer.Services.DataBaseServices
                 // Применяем сортировку по Id
                 list = ascending ? list.OrderBy(e => EF.Property<object>(e, "Id")) : list.OrderByDescending(e => EF.Property<object>(e, "Id"));
 
-                return list.Skip(from).Take(to).ToList();
+                return await list.Skip(from).Take(to).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -29,12 +29,11 @@ namespace MainServer.Services.DataBaseServices
                 return null;
             }
         }
-
-        public int GetCountOfRecords<T>() where T : class, IModel
+        public async Task<int> GetCountOfRecordsAsync<T>() where T : class, IModel
         {
             try
             {
-                return _context.Set<T>().Count();
+                return await _context.Set<T>().CountAsync();
             }
             catch (Exception ex)
             {
@@ -43,9 +42,9 @@ namespace MainServer.Services.DataBaseServices
             }
         }
 
-        public IModel GetObject<T>(int id) where T : class, IModel
+        public async Task<IModel> GetObjectAsync<T>(int id) where T : class, IModel
         {
-            return _context.Set<T>().Find(id);
+            return await _context.Set<T>().FindAsync(id);
         }
     }
 }
