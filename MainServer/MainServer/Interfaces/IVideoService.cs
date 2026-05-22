@@ -1,5 +1,6 @@
 ﻿using SharedLib.DTOmodels;
 using SharedLib.DTOmodels.RequestModel;
+using SharedLib.DTOmodels.RezultModels;
 using SharedLib.Models;
 
 namespace MainServer.Interfaces
@@ -15,6 +16,7 @@ namespace MainServer.Interfaces
         public Task<Video> GetVideoMetadataAsync(int videoId);
         public Task<int> NewVideoAsync(VideoUploadRequest request, int AuthorId);
         public Task<List<UserVideoListItemDto>> GetThisUserVideos(int userId);
+        public Task<DeleteResult> DeleteVideoAsync(int videoId);
 
     }
 }

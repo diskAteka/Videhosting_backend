@@ -74,33 +74,16 @@ namespace MainServer.Services
 
                 if (user == null)
                     throw new ApiException(ErrorType.NotFound, "Пользователь не найден");
-
-                // ДЕБАГ: что хранится в БД
-                _logger.LogInformation(
-                    "Debug: UserId={UserId}, Hash={Hash}, Salt={Salt}, HashLength={HashLen}, SaltLength={SaltLen}",
-                    user.Id,
-                    user.PasswordHash,
-                    user.PasswordSalt,
-                    user.PasswordHash?.Length,
-                    user.PasswordSalt?.Length);
-
-                // ДЕБАГ: что получается при проверке
                 var testHash = _passwordHasher.GetHash(login.Password + user.PasswordSalt);
-                _logger.LogInformation("Debug: TestHash={TestHash}, StoredHash={StoredHash}",
-                    testHash, user.PasswordHash);
-
                 bool isValid = _passwordHasher.VerifyPassword(
                     login.Password,
                     user.PasswordHash,
                     user.PasswordSalt);
 
-                _logger.LogInformation("Debug: Password valid={IsValid}", isValid);
-
                 if (!isValid)
                     throw new ApiException(ErrorType.Unauthorized, "Неверный пароль");
 
                 string token = _tokenService.GenerateToken(user.Id, user.Name, user.Email, user.CanUpload);
-
                 LoginResultDto loginRez = new()
                 {
                     Token = token,

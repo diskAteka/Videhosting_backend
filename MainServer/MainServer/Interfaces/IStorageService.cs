@@ -8,5 +8,6 @@ namespace MainServer.Interfaces
     {
         Task<Video> UploadToStorageAsync(VideoUploadRequest request, int AuthorId, string FileName);
         Task<GetObjectResponse> GetObjectAsync(string bucketName, string url);
+        Task<bool> DeleteVideoFilesAsync(string videoKey, string posterKey);
     }
 }

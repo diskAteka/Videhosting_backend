@@ -3,6 +3,8 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using MainServer.Interfaces;
 using SharedLib.DTOmodels.RequestModel;
+using SharedLib.Enums;
+using SharedLib.GlobalClasses;
 using SharedLib.Models;
 using System.Runtime.CompilerServices;
 
@@ -21,8 +23,9 @@ namespace MainServer.Services
         private readonly ILogger<StorageService> _logger;
         private readonly IAmazonS3 _s3Client;
 
-        public StorageService(IConfiguration configuration, PosterService posterService, 
-            ILogger<StorageService> logger)
+        public StorageService(IConfiguration configuration,
+                              PosterService posterService,
+                              ILogger<StorageService> logger)
         {
             _posterService = posterService;
             _logger = logger;
@@ -141,10 +144,7 @@ namespace MainServer.Services
             }
         }
 
-        private string BuildObjectUrl(string objectKey)
-        {
-            return $"{GarageEndpoint.TrimEnd('/')}/{_bucketName}/{objectKey}";
-        }
+        private string BuildObjectUrl(string objectKey) => $"{GarageEndpoint.TrimEnd('/')}/{_bucketName}/{objectKey}";
 
         private string GetContentType(string extension)
         {
@@ -171,28 +171,27 @@ namespace MainServer.Services
 
 
 
-        public async Task DeleteVideoFilesAsync(string videoKey, string posterKey)
+        public async Task<bool> DeleteVideoFilesAsync(string videoKey, string posterKey)
         {
-            var keys = new List<KeyVersion>
+            try
             {
-                new() { Key = videoKey },
-                new() { Key = posterKey }
-            };
+                var request = new DeleteObjectsRequest
+                {
+                    BucketName = _bucketName,
+                    Objects = new List<KeyVersion>
+                    {
+                        new() { Key = videoKey },
+                        new() { Key = posterKey }
+                    }
+                };
 
-            var request = new DeleteObjectsRequest
+                var response = await _s3Client.DeleteObjectsAsync(request);
+                return !response.DeleteErrors.Any();
+            }
+            catch(ApiException ex)
             {
-                BucketName = _bucketName,
-                Objects = keys
-            };
-
-            var response = await _s3Client.DeleteObjectsAsync(request);
-
-            foreach (var error in response.DeleteErrors)
-            {
-                _logger.LogError(
-                    "Failed to delete {Key}: {Message}",
-                    error.Key,
-                    error.Message);
+                _logger.LogError(ex, "Ошибка при удалении файлов видео: {Message}", ex.Message);
+                throw new ApiException(ErrorType.ServerError, $"Ошибка при удалении файлов видео: {ex.Message}");
             }
         }
 

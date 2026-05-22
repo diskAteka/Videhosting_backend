@@ -22,4 +22,10 @@
         Conflict,       // 409
         ServerError     // 500
     }
+
+    public enum UserRole
+    {
+        Admin,
+        Virifier
+    }
 }

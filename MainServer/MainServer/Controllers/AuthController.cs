@@ -14,13 +14,11 @@ namespace MainServer.Controllers
     {
         private readonly IAuthService _authService;
         private readonly ILogger<AuthController> _logger;
-        private readonly ITokenService _tokenService;
 
-        public AuthController(IAuthService authService, ILogger<AuthController> logger, ITokenService tokenService)
+        public AuthController(IAuthService authService, ILogger<AuthController> logger)
         {
             _authService = authService;
             _logger = logger;
-            _tokenService = tokenService;
         }
 
         [HttpPost("register")]

@@ -17,7 +17,6 @@ namespace MainServer.Controllers
     {
         private readonly IVideoService _videoService;
         private readonly ILogger<VideoController> _logger;
-        private readonly ITokenService _tokenService;
         private readonly IStorageService _storageService;
 
         private readonly string GarageEndpoint;
@@ -29,7 +28,6 @@ namespace MainServer.Controllers
         {
             _videoService = videoService;
             _logger = logger;
-            _tokenService = tokenService;
             _storageService = storageService;
             GarageEndpoint = configuration["Garage:Endpoint"] ?? "";
             _bucketName = configuration["Garage:BucketName"] ?? "";

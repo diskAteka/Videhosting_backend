@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using SharedLib.DTOmodels;
 using SharedLib.DTOmodels.RequestModel;
+using SharedLib.DTOmodels.RezultModels;
 using SharedLib.Enums;
 using SharedLib.GlobalClasses;
 using SharedLib.GlobalInterfaces;
@@ -18,15 +19,13 @@ namespace MainServer.Services
     {
         private readonly AppDbContext _context;
         private readonly ILogger<VideoService> _logger;
-        private readonly ITokenService _tokenService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IWebHostEnvironment _environment;
-        private readonly IStorageService _minIOService;
+        private readonly IStorageService _storageService;
         private readonly IConfiguration _configuration;
 
         public VideoService(AppDbContext context, 
             ILogger<VideoService> logger, 
-            ITokenService tokenService, 
             IHttpContextAccessor httpContextAccessor,
             IWebHostEnvironment environment,
             IStorageService minIOService,
@@ -34,10 +33,9 @@ namespace MainServer.Services
         {
             _context = context;
             _logger = logger;
-            _tokenService = tokenService;
             _httpContextAccessor = httpContextAccessor;
             _environment = environment;
-            _minIOService = minIOService;
+            _storageService = minIOService;
             _configuration = configuration;
         }
 
@@ -380,7 +378,7 @@ namespace MainServer.Services
                 using (var stream = new FileStream(tempFilePath, FileMode.CreateNew))
                     await request.Video.CopyToAsync(stream);
 
-                Video newVideo = await _minIOService.UploadToStorageAsync(request, AuthorId, tempFilePath);
+                Video newVideo = await _storageService.UploadToStorageAsync(request, AuthorId, tempFilePath);
 
 
 
@@ -442,6 +440,37 @@ namespace MainServer.Services
             catch (Exception ex) when (ex is not ApiException)
             {
                 _logger.LogError($"Неожиданная ошибка при чтении данных видео, Exeption {ex.Message}");
+                throw new ApiException(ErrorType.ServerError, "Внутренняя ошибка сервера");
+            }
+        }
+
+        public async Task<DeleteResult> DeleteVideoAsync(int videoId)
+        {
+            try
+            {
+                var video = await _context.Videos.FirstOrDefaultAsync(v => v.Id == videoId);
+                if (video == null)
+                    throw new ApiException(ErrorType.NotFound, "Видео не найдено");
+                bool succses = await _storageService.DeleteVideoFilesAsync(video.Link, video.Poster);
+                if (succses)
+                {
+                    _context.Videos.Remove(video);
+                    await _context.SaveChangesAsync();
+                    return new DeleteResult(true, null);
+                }
+                else
+                {
+                    _logger.LogError($"Ошибка при удалении файлов видео {videoId} из хранилища");
+                    throw new ApiException(ErrorType.ServerError, "Ошибка при удалении видео из хранилища");
+                }                                
+            }
+            catch (DbUpdateException ex)
+            {
+                throw new ApiException(ErrorType.ServerError, $"Ошибка при удалении из БД {ex.Message}");
+            }
+            catch (Exception ex) when (ex is not ApiException)
+            {
+                _logger.LogError($"Неожиданная ошибка при удалении видео, Exeption {ex.Message}");
                 throw new ApiException(ErrorType.ServerError, "Внутренняя ошибка сервера");
             }
         }
