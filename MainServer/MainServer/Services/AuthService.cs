@@ -29,7 +29,7 @@ namespace MainServer.Services
         {
             try
             {
-                User existingUser = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == register.Email);
+                User? existingUser = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == register.Email);
 
                 if (existingUser != null)
                     throw new ApiException(ErrorType.Conflict, "Пользователь с таким Email уже существует");
@@ -119,7 +119,7 @@ namespace MainServer.Services
                 if (id <= 0)
                     throw new ApiException(ErrorType.ValidationError,$"ID должен быть больше 0. Получено: {id}");
 
-                User user = await _context.Users.FindAsync(id);
+                User? user = await _context.Users.FindAsync(id);
 
                 if (user == null)
                     throw new ApiException(ErrorType.NotFound,$"Пользователя с ID {id} не существует");

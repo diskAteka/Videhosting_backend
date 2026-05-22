@@ -26,7 +26,7 @@ namespace MainServer.Services.DataBaseServices
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                return null;
+                throw new Exception($"Ошибка при получении объектов типа {typeof(T)}: {ex.Message}", ex);
             }
         }
         public async Task<int> GetCountOfRecordsAsync<T>() where T : class, IModel

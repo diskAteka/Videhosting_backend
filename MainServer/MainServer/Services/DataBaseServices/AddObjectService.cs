@@ -29,7 +29,7 @@ namespace MainServer.Services.DataBaseServices
             }
         }
 
-        private List<string> AffectedTableNames()
+        private List<string?> AffectedTableNames()
         {
             return _context.ChangeTracker.Entries()
                 .Where(e => e.State != EntityState.Unchanged)

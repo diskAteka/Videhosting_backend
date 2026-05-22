@@ -1,13 +1,12 @@
-﻿using SharedLib.Models;
-
+﻿
 namespace SharedLib.ServerClasses
 {
     public class GetMeResultDto
     {
         public bool Success {  get; set; }
-        public string Message { get; set; }
-        public string Name { get; set; }
-        public string Email { get; set; }
+        public string? Message { get; set; }
+        public string? Name { get; set; }
+        public string? Email { get; set; }
         public bool CanUpload { get; set; }
         public bool IsActive { get; set; }
 

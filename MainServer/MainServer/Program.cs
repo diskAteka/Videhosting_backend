@@ -14,7 +14,8 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args); //Ёто экземл€р класса-настройщика сервера
 
-var jwdSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
+var jwdSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()
+    ?? throw new InvalidOperationException("JwtSettings section is missing or invalid.");
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 
@@ -30,7 +31,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton(jwdSettings);
-builder.Services.AddScoped<RequireRole>()
+builder.Services.AddScoped<RequireRole>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();

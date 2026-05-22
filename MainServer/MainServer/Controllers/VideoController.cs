@@ -69,7 +69,10 @@ namespace MainServer.Controllers
         {
             try
             {
-                int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(nameIdentifier))
+                    return Unauthorized(new { message = "Не удалось определить идентификатор пользователя." });
+                int userId = int.Parse(nameIdentifier);
                 VideoDetailDto video = await _videoService.GetVideoAsync(id, userId);
                 return Ok(video);
             }
@@ -87,7 +90,10 @@ namespace MainServer.Controllers
             try
             {
                 int videoId = id;
-                int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(nameIdentifier)) 
+                    return Unauthorized(new { message = "Не удалось определить идентификатор пользователя." });
+                int userId = int.Parse(nameIdentifier);
                 ReactionRequest request = new ReactionRequest { UserId = userId, IsLike = reaction.IsLike, VideoId = videoId };
                 await _videoService.ReactionAsync(request);
                 return Ok();
@@ -120,7 +126,10 @@ namespace MainServer.Controllers
         {
             try
             {
-                int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(nameIdentifier))
+                    return Unauthorized(new { message = "Не удалось определить идентификатор пользователя." });
+                int userId = int.Parse(nameIdentifier);
                 CommentRequest request = new()
                 {
                     UserId = userId,
@@ -165,8 +174,10 @@ namespace MainServer.Controllers
         {
             try
             {
-                int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-                int newVideoId = await _videoService.NewVideoAsync(request, userId);
+                var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(nameIdentifier))
+                    return Unauthorized(new { message = "Не удалось определить идентификатор пользователя." });
+                int userId = int.Parse(nameIdentifier); int newVideoId = await _videoService.NewVideoAsync(request, userId);
                 VideoDetailDto video = await _videoService.GetVideoAsync(newVideoId, userId);
                 return Ok(video);
             }
@@ -183,7 +194,10 @@ namespace MainServer.Controllers
         {
             try
             {
-                int userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(nameIdentifier))
+                    return Unauthorized(new { message = "Не удалось определить идентификатор пользователя." });
+                int userId = int.Parse(nameIdentifier);
                 List<UserVideoListItemDto> videos = await _videoService.GetThisUserVideos(userId);
                 return Ok(videos);
             }

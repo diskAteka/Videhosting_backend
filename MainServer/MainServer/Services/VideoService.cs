@@ -267,8 +267,8 @@ namespace MainServer.Services
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                Like existLike = await _context.Likes.FirstOrDefaultAsync(l => (l.UserId == userId) && (l.VideoId == videoId));
-                DisLike existDislike = await _context.DisLikes.FirstOrDefaultAsync(d => (d.UserId == userId) && (d.VideoId == videoId));
+                Like? existLike = await _context.Likes.FirstOrDefaultAsync(l => (l.UserId == userId) && (l.VideoId == videoId));
+                DisLike? existDislike = await _context.DisLikes.FirstOrDefaultAsync(d => (d.UserId == userId) && (d.VideoId == videoId));
 
                 if (IsLike)
                 {
@@ -314,7 +314,7 @@ namespace MainServer.Services
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                throw;
+                throw new Exception($"Ошибка при обработке реакции пользователя: {ex.Message}");
             }
         }//Обрабатывает реакцию пользователя
 

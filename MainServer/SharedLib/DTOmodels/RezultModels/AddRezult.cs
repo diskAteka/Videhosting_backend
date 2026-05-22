@@ -1,8 +1,8 @@
 ﻿namespace SharedLib.DTOmodels.RezultModels
 {
-    public class AddRezult(bool success, List<string> affectedTables)
+    public class AddRezult(bool Success, List<string?>? AffectedTables)
     {
-        public bool Success { get; } = success;
-        public List<string> AffectedTables { get; } = affectedTables;
+        public bool Success { get; } = Success;
+        public List<string?>? AffectedTables { get; } = AffectedTables;
     }
 }

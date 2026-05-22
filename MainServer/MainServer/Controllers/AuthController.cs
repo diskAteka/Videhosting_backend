@@ -57,7 +57,10 @@ namespace MainServer.Controllers
         {
             try
             {
-                int id = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(nameIdentifier))
+                    return Unauthorized(new { message = "Не удалось определить идентификатор пользователя." });
+                int id = int.Parse(nameIdentifier);
                 GetMeResultDto rezult = await _authService.GetMeAsync(id);
                 return Ok(rezult);
             }

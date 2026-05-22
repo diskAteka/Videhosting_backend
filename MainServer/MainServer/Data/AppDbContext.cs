@@ -63,12 +63,12 @@ public partial class AppDbContext : DbContext
 
             entity.HasIndex(e => new { e.VideoId, e.UserId }, "IX_DisLike_VideoId_UserId").IsUnique();
 
-            entity.HasOne(d => d.User).WithMany(p => p.DisLikesTable)
+            entity.HasOne(d => d.User).WithMany(p => p.DisLikes)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__DisLike__UserId__6477ECF3");
 
-            entity.HasOne(d => d.Video).WithMany(p => p.DisLikesTable)
+            entity.HasOne(d => d.Video).WithMany(p => p.DisLikes)
                 .HasForeignKey(d => d.VideoId)
                 .HasConstraintName("FK__DisLike__VideoId__6383C8BA");
         });
@@ -81,12 +81,12 @@ public partial class AppDbContext : DbContext
 
             entity.HasIndex(e => new { e.VideoId, e.UserId }, "IX_Like_VideoId_UserId").IsUnique();
 
-            entity.HasOne(d => d.User).WithMany(p => p.LikesTable)
+            entity.HasOne(d => d.User).WithMany(p => p.Likes)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Like__UserId__60A75C0F");
 
-            entity.HasOne(d => d.Video).WithMany(p => p.LikesTable)
+            entity.HasOne(d => d.Video).WithMany(p => p.LikesNavigation)
                 .HasForeignKey(d => d.VideoId)
                 .HasConstraintName("FK__Like__VideoId__5FB337D6");
         });
@@ -161,12 +161,12 @@ public partial class AppDbContext : DbContext
 
             entity.HasIndex(e => new { e.VideoId, e.UserId }, "IX_View_VideoId_UserId").IsUnique();
 
-            entity.HasOne(d => d.User).WithMany(p => p.ViewsTable)
+            entity.HasOne(d => d.User).WithMany(p => p.Views)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__View__UserId__68487DD7");
 
-            entity.HasOne(d => d.Video).WithMany(p => p.ViewsTable)
+            entity.HasOne(d => d.Video).WithMany(p => p.ViewsNavigation)
                 .HasForeignKey(d => d.VideoId)
                 .HasConstraintName("FK__View__VideoId__6754599E");
         });

@@ -32,7 +32,7 @@ namespace MainServer.Services.DataBaseServices
                 return new DeleteResult(false, null); //При возникновении ошибки возвращаем неудачный результат с пустым массивом
             }
         }
-        private List<string> AffectedTableNames()
+        private List<string?> AffectedTableNames()
         {
             return _context.ChangeTracker.Entries()
                 .Where(e => e.State != EntityState.Unchanged)
