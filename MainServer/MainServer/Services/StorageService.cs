@@ -162,14 +162,11 @@ namespace MainServer.Services
             };
         }
 
-
         public async Task<GetObjectResponse> GetObjectAsync(string bucketName, string url) 
         {
             var response = await _s3Client.GetObjectAsync(bucketName, url);
             return response;
         }
-
-
 
         public async Task<bool> DeleteVideoFilesAsync(string videoKey, string posterKey)
         {

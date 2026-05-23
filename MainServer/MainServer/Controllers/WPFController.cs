@@ -1,5 +1,5 @@
-﻿using Amazon.S3.Model;
-using MainServer.Interfaces;
+﻿using MainServer.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SharedLib.DTOmodels.RequestModel;
 using SharedLib.Enums;
@@ -20,6 +20,10 @@ namespace MainServer.Controllers
         private readonly IVideoService _videoService;
         private readonly IConfiguration _configuration;
         private readonly ILogger<WPFController> _logger;
+        private readonly IStorageService _storageService;
+
+        private readonly string _garageEndpoint;
+        private readonly string _bucketName;
 
 
         private readonly Dictionary<Type, Func<Task<int>>> _countDelegates;
@@ -30,7 +34,8 @@ namespace MainServer.Controllers
                              IGetObjectService getObjectService,
                              IVideoService videoService,
                              IConfiguration configuration,
-                             ILogger<WPFController> logger)
+                             ILogger<WPFController> logger,
+                             IStorageService storageService)
         {
             _addObjectService = addObjectService;
             _deleteObjectService = deleteObjectService;
@@ -39,6 +44,11 @@ namespace MainServer.Controllers
             _videoService = videoService;
             _configuration = configuration;
             _logger = logger;
+            _storageService = storageService;
+
+
+            _garageEndpoint = configuration["Garage:Endpoint"] ?? "";
+            _bucketName = configuration["Garage:BucketName"] ?? "";
 
 
             _countDelegates = new Dictionary<Type, Func<Task<int>>>//Словарь для хранения делегатов позволяет обойти ограничение на строгое указание типа в вызове метода GetCountOfRecordsAsync<T>()
@@ -524,6 +534,7 @@ namespace MainServer.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         [Route("get/videos")]
         public async Task<IActionResult> GetVideos([FromBody] ListObjectRequestDto request)
         {
@@ -548,6 +559,7 @@ namespace MainServer.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         [Route("get/users")]
         public async Task<IActionResult> GetUsers([FromBody] ListObjectRequestDto request)
         {
@@ -573,6 +585,7 @@ namespace MainServer.Controllers
 
 
         [HttpGet]
+        [Authorize]
         [Route("get/comments")]
         public async Task<IActionResult> GetComments([FromBody] ListObjectRequestDto request)
         {
@@ -597,6 +610,7 @@ namespace MainServer.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         [Route("get/likes")]
         public async Task<IActionResult> GetLikes([FromBody] ListObjectRequestDto request)
         {
@@ -621,6 +635,7 @@ namespace MainServer.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         [Route("get/dislikes")]
         public async Task<IActionResult> GetDislikes([FromBody] ListObjectRequestDto request)
         {
@@ -645,6 +660,7 @@ namespace MainServer.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         [Route("get/views")]
         public async Task<IActionResult> GetViews([FromBody] ListObjectRequestDto request)
         {
@@ -667,6 +683,32 @@ namespace MainServer.Controllers
                 return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
             }
         }
+
+        [HttpGet]
+        [Authorize]
+        [Route("get/user/videos")]
+        public async Task<IActionResult> GetUserVideos([FromBody] GetUserVideosRequest request)
+        {
+            try
+            {
+                var response = await _videoService.GetThisUserVideos(request.UserId);
+                if (response != null)
+                    return Ok(response);
+                else
+                    return StatusCode(500, new { Message = $"Не найдено не одного просмотра" });
+            }
+            catch (Exception ex)
+            {
+                if (ex is ApiException)
+                {
+                    var apiEx = (ApiException)ex;
+                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
+                }
+                _logger.LogError(ex, "Ошибка при получении просмотров ");
+                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
+            }
+        }
+
 
         #endregion
 
@@ -729,7 +771,221 @@ namespace MainServer.Controllers
         }
         #endregion
 
+        #region getOne endponts
+
+        [HttpGet]
+        [Route("get/comment/{id}")]
+        [Authorize]
+        public async Task<IActionResult> GetComment([FromRoute] int id)
+        {
+            try
+            {
+                var response = await _getObjectService.GetObjectAsync<Comment>(id);
+                return Ok(response);
+            }
+            catch(Exception ex)
+            {
+                if(ex is ApiException)
+                {
+                    var apiEx = (ApiException)ex;
+                    int code = ApiException.GetStatusCode(apiEx.ErrorType);
+                    return StatusCode(code, new { Message = apiEx.Message });
+                }
+                return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
+            }
+        }
+
+        [HttpGet]
+        [Route("get/user/{id}")]
+        [Authorize]
+        public async Task<IActionResult> GetUser([FromRoute] int id)
+        {
+            try
+            {
+                var response = await _getObjectService.GetObjectAsync<User>(id);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                if (ex is ApiException)
+                {
+                    var apiEx = (ApiException)ex;
+                    int code = ApiException.GetStatusCode(apiEx.ErrorType);
+                    return StatusCode(code, new { Message = apiEx.Message });
+                }
+                return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
+            }
+        }
 
 
+
+        [HttpGet]
+        [Route("get/video/{id}")]
+        [Authorize]
+        public async Task<IActionResult> GetVideo([FromRoute] int id)
+        {
+            try
+            {
+                var response = await _getObjectService.GetObjectAsync<Video>(id);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                if (ex is ApiException)
+                {
+                    var apiEx = (ApiException)ex;
+                    int code = ApiException.GetStatusCode(apiEx.ErrorType);
+                    return StatusCode(code, new { Message = apiEx.Message });
+                }
+                return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
+            }
+        }
+
+
+        [HttpGet]
+        [Route("get/log/{id}")]
+        [RequireRole(UserRole.Admin)]
+        public async Task<IActionResult> GetServerLog([FromRoute] int id)
+        {
+            try
+            {
+                var response = await _getObjectService.GetObjectAsync<ServerLog>(id);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                if (ex is ApiException)
+                {
+                    var apiEx = (ApiException)ex;
+                    int code = ApiException.GetStatusCode(apiEx.ErrorType);
+                    return StatusCode(code, new { Message = apiEx.Message });
+                }
+                return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
+            }
+        }
+
+
+        [HttpGet]
+        [Route("get/employee/{id}")]
+        [RequireRole(UserRole.Admin)]
+        public async Task<IActionResult> GetEmployee([FromRoute] int id)
+        {
+            try
+            {
+                var response = await _getObjectService.GetObjectAsync<Employee>(id);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                if (ex is ApiException)
+                {
+                    var apiEx = (ApiException)ex;
+                    int code = ApiException.GetStatusCode(apiEx.ErrorType);
+                    return StatusCode(code, new { Message = apiEx.Message });
+                }
+                return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
+            }
+        }
+
+        [HttpGet]
+        [Route("get/view/{id}")]
+        [Authorize]
+        public async Task<IActionResult> GetView([FromRoute] int id)
+        {
+            try
+            {
+                var response = await _getObjectService.GetObjectAsync<View>(id);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                if (ex is ApiException)
+                {
+                    var apiEx = (ApiException)ex;
+                    int code = ApiException.GetStatusCode(apiEx.ErrorType);
+                    return StatusCode(code, new { Message = apiEx.Message });
+                }
+                return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
+            }
+        }
+
+
+        [HttpGet]
+        [Route("get/like/{id}")]
+        [Authorize]
+        public async Task<IActionResult> GetLike([FromRoute] int id)
+        {
+            try
+            {
+                var response = await _getObjectService.GetObjectAsync<Like>(id);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                if (ex is ApiException)
+                {
+                    var apiEx = (ApiException)ex;
+                    int code = ApiException.GetStatusCode(apiEx.ErrorType);
+                    return StatusCode(code, new { Message = apiEx.Message });
+                }
+                return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
+            }
+        }
+
+
+        [HttpGet]
+        [Route("get/dislike/{id}")]
+        [Authorize]
+        public async Task<IActionResult> GetDislike([FromRoute] int id)
+        {
+            try
+            {
+                var response = await _getObjectService.GetObjectAsync<DisLike>(id);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                if (ex is ApiException)
+                {
+                    var apiEx = (ApiException)ex;
+                    int code = ApiException.GetStatusCode(apiEx.ErrorType);
+                    return StatusCode(code, new { Message = apiEx.Message });
+                }
+                return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
+            }
+        }
+
+        #endregion
+
+        #region stream endpoint
+
+        [HttpGet]
+        [Authorize]
+        [Route("stream/{id}")]
+        public async Task<IActionResult> StreamVideo([FromRoute] int id)
+        {
+            try
+            {
+                var video = await _videoService.GetVideoMetadataAsync(id);
+                if (video == null)
+                    return NotFound("Видео не найдено");
+
+                var response = await _storageService.GetObjectAsync(_bucketName, video.Link);
+                return new FileStreamResult(response.ResponseStream, response.Headers.ContentType ?? "video/mp4")
+                { EnableRangeProcessing = true };
+            }
+            catch (Exception ex)
+            {
+                if (ex is ApiException)
+                {
+                    var apiEx = (ApiException)ex;
+                    int code = ApiException.GetStatusCode(apiEx.ErrorType);
+                    return StatusCode(code, new { Message = apiEx.Message });
+                }
+                return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
+            }
+        }
+
+        #endregion
     }
 }

@@ -31,7 +31,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton(jwdSettings);
-builder.Services.AddScoped<RequireRole>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -63,6 +62,7 @@ builder.Services.AddAuthorization();
 //Отладка расположена по этому адресу https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
 
 
 var allowedOrigins = builder.Configuration.GetSection("CorsOrigins").Get<string[]>();
@@ -127,6 +127,12 @@ async Task HandleException(HttpContext context)
     };
 
     await context.Response.WriteAsJsonAsync(response);
+}
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 //Настройка сервера

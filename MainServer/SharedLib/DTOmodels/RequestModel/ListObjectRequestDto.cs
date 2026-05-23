@@ -6,4 +6,9 @@
         public int To { get; set; } = 20;
         public bool Ascending { get; set; } = true; // Сортировка по возрастанию по умолчанию
     }
+
+    public class GetUserVideosRequest : ListObjectRequestDto
+    {
+        public int UserId { get; set; } 
+    }
 }
