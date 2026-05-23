@@ -1,8 +1,10 @@
 ﻿using MainServer.Data;
 using Microsoft.EntityFrameworkCore;
 using SharedLib.DTOmodels.RezultModels;
+using SharedLib.GlobalClasses;
 using SharedLib.GlobalInterfaces;
 using System.Threading.Tasks;
+using SharedLib.Enums;
 
 namespace MainServer.Services.DataBaseServices
 {
@@ -21,7 +23,7 @@ namespace MainServer.Services.DataBaseServices
                 var dbSet = _context.Set<T>(); //Определяети тип таблицы на лету
                 var entity = await dbSet.FindAsync(id);
                 if (entity == null)
-                    return new DeleteResult(false, null); //Если сущность не найдена, возвращаем неудачный результат с пустым массивом
+                    throw new ApiException(ErrorType.NotFound, $"Объект типа {typeof(T)} с id {id} не найден");
                 dbSet.Remove(entity);
                 int affectedRows = await _context.SaveChangesAsync();
                 return new DeleteResult(affectedRows > 0, AffectedTableNames()); //Если удаление прошло успешно, возвращаем результат с информацией об измененных таблицах

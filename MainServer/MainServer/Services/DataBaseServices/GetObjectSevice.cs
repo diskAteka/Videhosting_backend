@@ -1,5 +1,7 @@
 ﻿using MainServer.Data;
 using Microsoft.EntityFrameworkCore;
+using SharedLib.Enums;
+using SharedLib.GlobalClasses;
 using SharedLib.GlobalInterfaces;
 
 namespace MainServer.Services.DataBaseServices
@@ -17,10 +19,8 @@ namespace MainServer.Services.DataBaseServices
             try
             {
                 list = _context.Set<T>().AsNoTracking();
-
-                // Применяем сортировку по Id
+                // Сортировка по Id
                 list = ascending ? list.OrderBy(e => EF.Property<object>(e, "Id")) : list.OrderByDescending(e => EF.Property<object>(e, "Id"));
-
                 return await list.Skip(from).Take(to).ToListAsync();
             }
             catch (Exception ex)
@@ -44,7 +44,17 @@ namespace MainServer.Services.DataBaseServices
 
         public async Task<IModel> GetObjectAsync<T>(int id) where T : class, IModel
         {
-            return await _context.Set<T>().FindAsync(id);
+            try
+            {
+                var entity = await _context.Set<T>().FindAsync(id);
+                return entity ?? throw new ApiException(ErrorType.NotFound, $"Объект типа {typeof(T)} с id {id} не найден");   
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                throw new Exception($"Ошибка при получении объекта типа {typeof(T)} с id {id}: {ex.Message}", ex);
+            }
+
         }
     }
 }
