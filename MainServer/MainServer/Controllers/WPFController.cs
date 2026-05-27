@@ -257,7 +257,7 @@ namespace MainServer.Controllers
         [Route("update/video/{id}")]
         [HttpPut]
         [RequireRole(UserRole.Admin)]
-        public async Task<IActionResult> UpdateVideo([FromRoute] int id, [FromBody] VideoDto video)
+        public async Task<IActionResult> UpdateVideo([FromRoute] int id, [FromBody] PostVideoDto video)
         {
             try
             {
@@ -283,7 +283,7 @@ namespace MainServer.Controllers
         [Route("update/user/{id}")]
         [HttpPut]
         [RequireRole(UserRole.Admin)]
-        public async Task<IActionResult> UpdateUser([FromRoute] int id, [FromBody] User user)
+        public async Task<IActionResult> UpdateUser([FromRoute] int id, [FromBody] PostUserDto user)
         {
             try
             {
@@ -309,7 +309,7 @@ namespace MainServer.Controllers
 
         [Route("update/comment/{id}")]
         [HttpPut]
-        public async Task<IActionResult> UpdateComment([FromRoute] int id, [FromBody] Comment comment)
+        public async Task<IActionResult> UpdateComment([FromRoute] int id, [FromBody] PostCommentDto comment)
         {
             try
             {
