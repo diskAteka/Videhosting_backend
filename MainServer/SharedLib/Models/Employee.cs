@@ -2,7 +2,7 @@
 
 namespace SharedLib.Models
 {
-    public partial class Employee : IModel, IDeleteble, IAddble
+    public partial class Employee : IModel, IDeleteble, IUpdateble, IAddble
     {
         public int Id { get; set; }
 
