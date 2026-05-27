@@ -2,11 +2,10 @@
 using MainServer.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SharedLib.DTOmodels;
-using SharedLib.DTOmodels.RequestModel;
-using SharedLib.GlobalClasses;
-using SharedLib.GlobalInterfaces;
-using SharedLib.Models;
+using SharedLib.Contracts.Request.Video;
+using SharedLib.Contracts.Response.Video;
+using SharedLib.Common;
+using SharedLib.Interfaces;
 using System.Security.Claims;
 
 namespace MainServer.Controllers
@@ -38,7 +37,7 @@ namespace MainServer.Controllers
         {
             try
             {
-                List<VideoListItemDto> videos = await _videoService.GetAllVideoAsync();
+                List<VideoListItemResponse> videos = await _videoService.GetAllVideoAsync();
                 return Ok(videos);
             }
             catch (ApiException ex)
@@ -53,7 +52,7 @@ namespace MainServer.Controllers
         {
             try
             {
-                List<VideoListItemDto> videos = await _videoService.VideoSearchAsync(query);
+                List<VideoListItemResponse> videos = await _videoService.VideoSearchAsync(query);
                 return Ok(videos);
             }
             catch (ApiException ex)
@@ -73,7 +72,7 @@ namespace MainServer.Controllers
                 if (string.IsNullOrEmpty(nameIdentifier))
                     return Unauthorized(new { message = "Не удалось определить идентификатор пользователя." });
                 int userId = int.Parse(nameIdentifier);
-                VideoDetailDto video = await _videoService.GetVideoAsync(id, userId);
+                VideoDetailsResponse video = await _videoService.GetVideoAsync(id, userId);
                 return Ok(video);
             }
             catch (ApiException ex)
@@ -110,7 +109,7 @@ namespace MainServer.Controllers
         {
             try
             {
-                List<CommentDto> comments = await _videoService.GetCommentsAsync(id);
+                List<CommentResponse> comments = await _videoService.GetCommentsAsync(id);
                 return Ok(comments);
             }
             catch (ApiException ex)
@@ -122,7 +121,7 @@ namespace MainServer.Controllers
 
         [HttpPost("{id}/comments")]
         [Authorize]
-        public async Task<IActionResult> NewComment([FromBody]  CommentMinDto comment, int id)
+        public async Task<IActionResult> NewComment([FromBody]  CommentCreateRequest comment, int id)
         {
             try
             {
@@ -130,7 +129,7 @@ namespace MainServer.Controllers
                 if (string.IsNullOrEmpty(nameIdentifier))
                     return Unauthorized(new { message = "Не удалось определить идентификатор пользователя." });
                 int userId = int.Parse(nameIdentifier);
-                CommentRequest request = new()
+                CommentCreateDto request = new()
                 {
                     UserId = userId,
                     Text = comment.Text,
@@ -178,7 +177,7 @@ namespace MainServer.Controllers
                 if (string.IsNullOrEmpty(nameIdentifier))
                     return Unauthorized(new { message = "Не удалось определить идентификатор пользователя." });
                 int userId = int.Parse(nameIdentifier); int newVideoId = await _videoService.NewVideoAsync(request, userId);
-                VideoDetailDto video = await _videoService.GetVideoAsync(newVideoId, userId);
+                VideoDetailsResponse video = await _videoService.GetVideoAsync(newVideoId, userId);
                 return Ok(video);
             }
             catch (ApiException ex)

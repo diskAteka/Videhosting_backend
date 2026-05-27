@@ -1,9 +1,9 @@
 ﻿using MainServer.Data;
 using Microsoft.EntityFrameworkCore;
-using SharedLib.DTOmodels.RezultModels;
+using SharedLib.Contracts.RezultModels;
 using SharedLib.Enums;
-using SharedLib.GlobalClasses;
-using SharedLib.GlobalInterfaces;
+using SharedLib.Common;
+using SharedLib.Interfaces;
 
 namespace MainServer.Services.DataBaseServices
 {

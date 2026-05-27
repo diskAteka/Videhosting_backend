@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
-using SharedLib.DTOmodels.Response;
-using SharedLib.DTOmodels.WPFDto;
+using SharedLib.Contracts.Admin;
 using SharedLib.Models;
 
 namespace MainServer.Services
@@ -23,7 +22,7 @@ namespace MainServer.Services
             CreateMap<PostDislikeDto, DisLike>();
             CreateMap<PostViewDto, View>();
             CreateMap<PostLikeDto, Like>();
-            CreateMap<PostEmployeeDto, Employee>();
+            CreateMap<PostPutEmployeeRequest, Employee>();
         }
     }
 }

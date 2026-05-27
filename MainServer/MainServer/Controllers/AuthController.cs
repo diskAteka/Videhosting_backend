@@ -1,9 +1,9 @@
 ﻿using MainServer.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SharedLib.GlobalClasses;
-using SharedLib.GlobalInterfaces;
-using SharedLib.ServerClasses;
+using SharedLib.Common;
+using SharedLib.Contracts.Request.Auth;
+using SharedLib.Contracts.Response.Auth;
 using System.Security.Claims;
 
 namespace MainServer.Controllers
@@ -22,11 +22,11 @@ namespace MainServer.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterRequestDto request)
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
             try
             {
-                RegisterResultDto result = await _authService.RegisterAsync(request);//Сервис сам выбросит исключение если произойдет ошибка
+                RegisterResponse result = await _authService.RegisterAsync(request);//Сервис сам выбросит исключение если произойдет ошибка
                 return Ok(result);
             }
             catch (ApiException ex)
@@ -37,11 +37,11 @@ namespace MainServer.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             try
             {
-                LoginResultDto rezult = await _authService.LoginAsync(request);
+                LoginResponse rezult = await _authService.LoginAsync(request);
                 return Ok(rezult);
             }
             catch (ApiException ex)

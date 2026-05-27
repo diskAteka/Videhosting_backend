@@ -1,6 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Metadata;
-using SharedLib.Models;
-using System.Collections.Generic;
+﻿using SharedLib.Models;
 
 namespace SharedLib.Enums
 {
@@ -10,11 +8,6 @@ namespace SharedLib.Enums
         Comment,
         Video,
         ServerLog
-    }
-    public enum LogType
-    {
-        загрузка,
-        просмотр
     }
 
     public enum ErrorType

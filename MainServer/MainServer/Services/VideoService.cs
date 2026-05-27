@@ -1,13 +1,11 @@
 ﻿using MainServer.Data;
 using MainServer.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using SharedLib.DTOmodels;
-using SharedLib.DTOmodels.RequestModel;
-using SharedLib.DTOmodels.RezultModels;
+using SharedLib.Contracts.Request.Video;
+using SharedLib.Contracts.Response.Video;
+using SharedLib.Contracts.RezultModels;
 using SharedLib.Enums;
-using SharedLib.GlobalClasses;
-using SharedLib.GlobalInterfaces;
+using SharedLib.Common;
 using SharedLib.Models;
 using System.Data.Common;
 using View = SharedLib.Models.View;
@@ -39,17 +37,17 @@ namespace MainServer.Services
             _configuration = configuration;
         }
 
-        public async Task<List<VideoListItemDto>> GetAllVideoAsync()
+        public async Task<List<VideoListItemResponse>> GetAllVideoAsync()
         {
             try
             {
-                List<VideoListItemDto> videoList = await _context.Videos
+                List<VideoListItemResponse> videoList = await _context.Videos
                     .AsNoTracking()
                     .Include(v => v.Author)
                     .OrderByDescending(v => v.Views)
                     .Where(v => v.IsVerified)
                     .Take(20)
-                    .Select(v => new VideoListItemDto
+                    .Select(v => new VideoListItemResponse
                     {
                         Id = v.Id,
                         Name = v.Name,
@@ -71,7 +69,7 @@ namespace MainServer.Services
             }
         }//Возвращает коллекцию из максимум 20 видео или возвращает null
 
-        public async Task<VideoDetailDto> GetVideoAsync(int videoId, int userId)
+        public async Task<VideoDetailsResponse> GetVideoAsync(int videoId, int userId)
         {
             try
             {
@@ -86,19 +84,19 @@ namespace MainServer.Services
                 }
 
 
-                Video v = await _context.Videos
+                Video? v = await _context.Videos
                     .AsNoTracking()
                     .Include(v => v.Author)
                     .Include(v => v.Comments)
                     .ThenInclude(c => c.User)
                     .FirstOrDefaultAsync(v => v.Id == videoId);
-                ICollection<Comment> c = v.Comments;
+                ICollection<Comment> c = v?.Comments ?? new List<Comment>();
 
                 //Если в таблице с лайками есть запись с этим пользователем и с этим видео, значит этот лайкнул посмотрел это видео. 
                 //Аналогично для других флагов
                 bool isLiked = await _context.Likes.FirstOrDefaultAsync(l => (l.UserId == userId) && (l.VideoId == videoId)) == null ? false : true;
                 bool isDisliked = await _context.DisLikes.FirstOrDefaultAsync(d => (d.UserId == userId) && (d.VideoId == videoId)) == null ? false : true;
-                List<CommentDto> Comments = c.Select(c => new CommentDto
+                List<CommentResponse> Comments = c.Select(c => new CommentResponse
                 {
                     AuthorId = c.UserId,
                     AuthorName = c.User.Name,
@@ -106,12 +104,12 @@ namespace MainServer.Services
                     CreatedAt = c.Date
                 }).ToList();
 
-                var request = _httpContextAccessor.HttpContext.Request;
-                var baseUrl = $"{request.Scheme}://{request.Host}";
+                var request = _httpContextAccessor.HttpContext?.Request;
+                var baseUrl = $"{request?.Scheme}://{request?.Host}";
 
-                VideoDetailDto videoDto = new()
+                VideoDetailsResponse videoDto = new()
                 {
-                    Id = v.Id,
+                    Id = v?.Id ?? throw new ApiException(ErrorType.NotFound, "Видео не найдено"),
                     Name = v.Name,
                     Description = v.Description,
                     DateUpload = v.DateUpload,
@@ -142,21 +140,21 @@ namespace MainServer.Services
             }
         }//Возвращает video по id или возвращает null
 
-        public async Task<List<VideoListItemDto>> VideoSearchAsync(string query, int limit = 10)
+        public async Task<List<VideoListItemResponse>> VideoSearchAsync(string query, int limit = 10)
         {
             try
             {
                 var searchLower = query.ToLower().Trim();
 
                 if (searchLower.Length < 2)
-                    return new List<VideoListItemDto>();
+                    return new List<VideoListItemResponse>();
 
                 // Получаем все видео сначала
                 var videoQuery = _context.Videos
                     .Where(v => v.IsVerified)
                     .Include(v => v.Author)
                     .Where(v => v.Name.ToLower().Contains(searchLower) ||
-                               v.Description.ToLower().Contains(searchLower));
+                               (v.Description != null && v.Description.ToLower().Contains(searchLower)));
 
                 // Выполняем в памяти для сложной сортировки
                 var videos = await videoQuery.ToListAsync();
@@ -170,7 +168,7 @@ namespace MainServer.Services
                     .OrderByDescending(x => x.Score)
                     .ThenByDescending(x => x.Video.Views)
                     .Take(limit)
-                    .Select(x => new VideoListItemDto
+                    .Select(x => new VideoListItemResponse
                     {
                         Id = x.Video.Id,
                         Name = x.Video.Name,
@@ -193,7 +191,7 @@ namespace MainServer.Services
             }
         }//Получение массива с данными о 10 видео наиболее соответсвующих
 
-        public async Task NewCommentAsync(CommentRequest request)
+        public async Task NewCommentAsync(CommentCreateDto request)
         {
             try
             {
@@ -224,7 +222,7 @@ namespace MainServer.Services
             }
         }//Добавляет новый коментарий в БД
 
-        public async Task<List<CommentDto>> GetCommentsAsync(int videoId)
+        public async Task<List<CommentResponse>> GetCommentsAsync(int videoId)
         {
             try
             {
@@ -232,11 +230,11 @@ namespace MainServer.Services
                 if (!videoExists)
                     throw new ApiException(ErrorType.NotFound, $"Видео {videoId} не найдено");
 
-                List<CommentDto> comments = await _context.Comments
+                List<CommentResponse> comments = await _context.Comments
                     .AsNoTracking()
                     .Where(c => c.VideoId == videoId)
                     .Include(c => c.User)
-                    .Select(c => new CommentDto
+                    .Select(c => new CommentResponse
                     {
                         AuthorId = c.UserId,
                         AuthorName = c.User.Name,
@@ -322,9 +320,12 @@ namespace MainServer.Services
         {
             try
             {
-                return await _context.Videos
+               var video = await _context.Videos
                     .AsNoTracking()
                     .FirstOrDefaultAsync(v => v.Id == videoId);
+               if (video == null)
+                   throw new ApiException(ErrorType.NotFound, "Видео не найдено");
+               return video;
             }
             catch (DbException ex)
             {

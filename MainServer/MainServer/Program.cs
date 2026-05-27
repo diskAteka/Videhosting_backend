@@ -8,8 +8,8 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SharedLib.Enums;
-using SharedLib.GlobalClasses;
-using SharedLib.GlobalInterfaces;
+using SharedLib.Common;
+using SharedLib.Interfaces;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args); //Ёто экземл€р класса-настройщика сервера

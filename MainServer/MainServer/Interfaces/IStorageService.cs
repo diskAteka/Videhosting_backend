@@ -1,5 +1,5 @@
 ﻿using Amazon.S3.Model;
-using SharedLib.DTOmodels.RequestModel;
+using SharedLib.Contracts.Request.Video;
 using SharedLib.Models;
 
 namespace MainServer.Interfaces

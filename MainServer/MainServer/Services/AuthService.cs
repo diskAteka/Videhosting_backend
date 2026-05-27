@@ -1,11 +1,12 @@
 ﻿using MainServer.Data;
 using MainServer.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using SharedLib.Contracts.Request.Auth;
+using SharedLib.Contracts.Response.Auth;
 using SharedLib.Enums;
-using SharedLib.GlobalClasses;
-using SharedLib.GlobalInterfaces;
+using SharedLib.Common;
+using SharedLib.Interfaces;
 using SharedLib.Models;
-using SharedLib.ServerClasses;
 using System.Data.Common;
 
 namespace MainServer.Services
@@ -25,7 +26,7 @@ namespace MainServer.Services
             _tokenService = tokenService;
         }
 
-        public async Task<RegisterResultDto> RegisterAsync(RegisterRequestDto register)
+        public async Task<RegisterResponse> RegisterAsync(RegisterRequest register)
         {
             try
             {
@@ -50,7 +51,7 @@ namespace MainServer.Services
                 await _context.Users.AddAsync(user);
                 await _context.SaveChangesAsync();
 
-                return RegisterResultDto.Ok(); 
+                return RegisterResponse.Ok(); 
             }
             catch (DbUpdateException ex)
             {
@@ -65,7 +66,7 @@ namespace MainServer.Services
         }//Метод добавления нового пользователя в БД
 
 
-        public async Task<LoginResultDto> LoginAsync(LoginRequestDto login)
+        public async Task<LoginResponse> LoginAsync(LoginRequest login)
         {
             try
             {
@@ -84,7 +85,7 @@ namespace MainServer.Services
                     throw new ApiException(ErrorType.Unauthorized, "Неверный пароль");
 
                 string token = _tokenService.GenerateToken(user.Id, user.Name, user.Email, user.CanUpload);
-                LoginResultDto loginRez = new()
+                LoginResponse loginRez = new()
                 {
                     Token = token,
                     User = new()

@@ -2,9 +2,9 @@
 using Amazon.S3;
 using Amazon.S3.Model;
 using MainServer.Interfaces;
-using SharedLib.DTOmodels.RequestModel;
+using SharedLib.Contracts.Request.Video;
 using SharedLib.Enums;
-using SharedLib.GlobalClasses;
+using SharedLib.Common;
 using SharedLib.Models;
 using System.Runtime.CompilerServices;
 

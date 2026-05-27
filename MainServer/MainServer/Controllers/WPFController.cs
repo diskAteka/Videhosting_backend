@@ -2,12 +2,10 @@
 using MainServer.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SharedLib.DTOmodels.RequestModel;
-using SharedLib.DTOmodels.Response;
-using SharedLib.DTOmodels.WPFDto;
+using SharedLib.Contracts.Admin;
 using SharedLib.Enums;
-using SharedLib.GlobalClasses;
-using SharedLib.GlobalInterfaces;
+using SharedLib.Common;
+using SharedLib.Interfaces;
 using SharedLib.Models;
 
 namespace MainServer.Controllers
@@ -341,7 +339,7 @@ namespace MainServer.Controllers
         [Route("add/employee")]
         [HttpPost]
         [RequireRole(UserRole.Admin)]
-        public async Task<IActionResult> AddEmployee([FromBody] PostEmployeeDto employee)
+        public async Task<IActionResult> AddEmployee([FromBody] PostPutEmployeeRequest employee)
         {
             try
             {

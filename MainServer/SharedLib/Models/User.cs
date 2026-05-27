@@ -1,4 +1,5 @@
-﻿using SharedLib.GlobalInterfaces;
+﻿using SharedLib.Interfaces;
+
 
 namespace SharedLib.Models
 {
