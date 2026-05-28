@@ -1,8 +1,10 @@
-﻿namespace SharedLib.Interfaces
+﻿using SharedLib.Contracts.Admin;
+
+namespace SharedLib.Interfaces
 {
     public interface IGetObjectService
     {
-        public Task<List<T>> GetObjectsAsync<T>(int from, int to, bool ascending = true) where T : class , IModel;
+        public Task<List<T>> GetObjectsAsync<T>(QueryParameters parameters) where T : class , IModel;
 
         public Task<int> GetCountOfRecordsAsync<T>() where T : class, IModel;
 

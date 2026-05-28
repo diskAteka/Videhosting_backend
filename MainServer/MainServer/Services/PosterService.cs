@@ -34,7 +34,7 @@ namespace MainServer.Services
             }
             catch(Exception ex)
             {
-                Console.WriteLine("Ошибка при создании постера, было использовано постер по умолчанию");
+                Console.WriteLine($"Ошибка при создании постера, был использован постер по умолчанию. Текст ошибки: {ex.Message}");
                 File.Copy(@"Recurce\placeholder.png", @"Recurce\placeholder1.png");
                 return @"Recurce\placeholder1.png";
             }            

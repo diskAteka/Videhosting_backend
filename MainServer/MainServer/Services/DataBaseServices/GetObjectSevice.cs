@@ -1,8 +1,10 @@
 ﻿using MainServer.Data;
 using Microsoft.EntityFrameworkCore;
-using SharedLib.Enums;
 using SharedLib.Common;
+using SharedLib.Contracts.Admin;
+using SharedLib.Enums;
 using SharedLib.Interfaces;
+using System.Linq.Dynamic.Core;
 
 namespace MainServer.Services.DataBaseServices
 {
@@ -13,15 +15,21 @@ namespace MainServer.Services.DataBaseServices
         {
             _context = context;
         }
-        public async Task<List<T>> GetObjectsAsync<T>(int from = 0, int to = 10, bool ascending = true) where T : class, IModel
+        public async Task<List<T>> GetObjectsAsync<T>(QueryParameters parameters) where T : class, IModel
         {
-            IQueryable<T>? list = null;
             try
             {
-                list = _context.Set<T>().AsNoTracking();
-                // Сортировка по Id
-                list = ascending ? list.OrderBy(e => EF.Property<object>(e, "Id")) : list.OrderByDescending(e => EF.Property<object>(e, "Id"));
-                return await list.Skip(from).Take(to).ToListAsync();
+                var query = _context.Set<T>().AsNoTracking();
+
+                query = ApplySortingDynamic(query, parameters);
+
+                int skip = (parameters.Page - 1) * parameters.PageSize;
+                var result = await query
+                    .Skip(skip)
+                    .Take(parameters.PageSize)
+                    .ToListAsync();
+
+                return result;
             }
             catch (Exception ex)
             {
@@ -56,5 +64,26 @@ namespace MainServer.Services.DataBaseServices
             }
 
         }
+
+        private IQueryable<T> ApplySortingDynamic<T>(IQueryable<T> query, QueryParameters parameters)
+        {
+            if (string.IsNullOrWhiteSpace(parameters.SortBy))
+            {
+                return parameters.SortAscending
+                    ? query.OrderBy("Id ASC")
+                    : query.OrderBy("Id DESC");
+            }
+
+            string orderByString = $"{parameters.SortBy} {(parameters.SortAscending ? "ASC" : "DESC")}";
+            try
+            {
+                return query.OrderBy(orderByString);
+            }
+            catch
+            {
+                return query.OrderBy("Id ASC");
+            }
+        }
+
     }
 }

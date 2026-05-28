@@ -525,11 +525,11 @@ namespace MainServer.Controllers
         [HttpGet]
         [Route("get/employees")]
         [RequireRole(UserRole.Admin)]
-        public async Task<IActionResult> GetEmloyee([FromBody] ListObjectRequestDto request)
+        public async Task<IActionResult> GetEmloyee([FromQuery] QueryParameters parameters)
         {
             try
             {
-                var employee = await _getObjectService.GetObjectsAsync<Employee>(request.From, request.To, request.Ascending);
+                var employee = await _getObjectService.GetObjectsAsync<Employee>(parameters);
                 if (employee != null)
                     return Ok(employee);
                 else
@@ -550,11 +550,11 @@ namespace MainServer.Controllers
         [HttpGet]
         [Authorize]
         [Route("get/videos")]
-        public async Task<IActionResult> GetVideos([FromBody] ListObjectRequestDto request)
+        public async Task<IActionResult> GetVideos([FromQuery] QueryParameters parameters)
         {
             try
             {
-                var videos = await _getObjectService.GetObjectsAsync<Video>(request.From, request.To, request.Ascending);
+                var videos = await _getObjectService.GetObjectsAsync<Video>(parameters);
                 if (videos != null)
                 { 
                 
@@ -579,15 +579,15 @@ namespace MainServer.Controllers
         [HttpGet]
         [Authorize]
         [Route("get/users")]
-        public async Task<IActionResult> GetUsers([FromBody] ListObjectRequestDto request)
+        public async Task<IActionResult> GetUsers([FromQuery] QueryParameters parameters)
         {
             try
             {
-                var users = await _getObjectService.GetObjectsAsync<User>(request.From, request.To, request.Ascending);
+                var users = await _getObjectService.GetObjectsAsync<User>(parameters);
                 if (users != null)
                 {
-                        var response = _mapper.Map<List<UserDto>>(users);
-                        return Ok(response);
+                    var response = _mapper.Map<List<UserDto>>(users);
+                    return Ok(response);
                 }
                 else
                     return StatusCode(500, new { Message = $"Не найдено не одного пользователя" });
@@ -608,11 +608,11 @@ namespace MainServer.Controllers
         [HttpGet]
         [Authorize]
         [Route("get/comments")]
-        public async Task<IActionResult> GetComments([FromBody] ListObjectRequestDto request)
+        public async Task<IActionResult> GetComments([FromQuery] QueryParameters parameters)
         {
             try
             {
-                var comments = await _getObjectService.GetObjectsAsync<Comment>(request.From, request.To, request.Ascending);
+                var comments = await _getObjectService.GetObjectsAsync<Comment>(parameters);
                 if (comments != null)
                 {
                     var response = _mapper.Map<List<CommentDto>>(comments);
@@ -636,11 +636,11 @@ namespace MainServer.Controllers
         [HttpGet]
         [Authorize]
         [Route("get/likes")]
-        public async Task<IActionResult> GetLikes([FromBody] ListObjectRequestDto request)
+        public async Task<IActionResult> GetLikes([FromQuery] QueryParameters parameters)
         {
             try
             {
-                var likes = await _getObjectService.GetObjectsAsync<Like>(request.From, request.To, request.Ascending);
+                var likes = await _getObjectService.GetObjectsAsync<Like>(parameters);
                 if (likes != null)
                 {
                     var response = _mapper.Map<List<LikeDto>>(likes);
@@ -664,11 +664,11 @@ namespace MainServer.Controllers
         [HttpGet]
         [Authorize]
         [Route("get/dislikes")]
-        public async Task<IActionResult> GetDislikes([FromBody] ListObjectRequestDto request)
+        public async Task<IActionResult> GetDislikes([FromQuery] QueryParameters parameters)
         {
             try
             {
-                var dislikes = await _getObjectService.GetObjectsAsync<DisLike>(request.From, request.To, request.Ascending);
+                var dislikes = await _getObjectService.GetObjectsAsync<DisLike>(parameters);
                 if (dislikes != null)
                 {
                     var response = _mapper.Map<List<DislikeDto>>(dislikes);
@@ -692,11 +692,11 @@ namespace MainServer.Controllers
         [HttpGet]
         [Authorize]
         [Route("get/views")]
-        public async Task<IActionResult> GetViews([FromBody] ListObjectRequestDto request)
+        public async Task<IActionResult> GetViews([FromQuery] QueryParameters parameters)
         {
             try
             {
-                var views = await _getObjectService.GetObjectsAsync<View>(request.From, request.To, request.Ascending);
+                var views = await _getObjectService.GetObjectsAsync<View>(parameters);
                 if (views != null)
                 {
                     var response = _mapper.Map<List<ViewDto>>(views);
@@ -720,11 +720,11 @@ namespace MainServer.Controllers
         [HttpGet]
         [Authorize]
         [Route("get/user/videos")]
-        public async Task<IActionResult> GetUserVideos([FromBody] GetUserVideosRequest request)
+        public async Task<IActionResult> GetUserVideos([FromQuery] int userId)
         {
             try
             {
-                var userVideos = await _videoService.GetThisUserVideos(request.UserId);
+                var userVideos = await _videoService.GetThisUserVideos(userId);
                 if (userVideos != null)
                 {
                     var mappedResponse = _mapper.Map<List<VideoDto>>(userVideos);
