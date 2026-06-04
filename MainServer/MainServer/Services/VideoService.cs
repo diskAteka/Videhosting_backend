@@ -458,7 +458,7 @@ namespace MainServer.Services
                 {
                     _context.Videos.Remove(video);
                     await _context.SaveChangesAsync();
-                    return new DeleteResult(true, null);
+                    return new DeleteResult(null, true);
                 }
                 else
                 {

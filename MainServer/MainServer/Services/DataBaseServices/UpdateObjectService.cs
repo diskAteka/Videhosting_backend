@@ -24,13 +24,14 @@ namespace MainServer.Services.DataBaseServices
                 if(!exists)
                     throw new ApiException(ErrorType.NotFound, $"Объект типа {typeof(T)} с id {EF.Property<int>(table, "Id")} не найден");
                 dbSet.Update(table);
+                var affectedTables = AffectedTableNames();
                 int affectedRows = await _context.SaveChangesAsync();
-                return new UpdateRezult(affectedRows > 0, AffectedTableNames());
+                return new UpdateRezult(affectedTables, affectedRows > 0);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Ошибка при обновлении объекта: {ex.Message}");
-                return new UpdateRezult(false, null);
+                return new UpdateRezult(null, false);
             }
         }
 

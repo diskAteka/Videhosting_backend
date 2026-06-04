@@ -1,8 +1,15 @@
 ﻿namespace SharedLib.Contracts.RezultModels
 {
-    public class AddRezult(bool Success, List<string?>? AffectedTables)
+    public class AddRezult
     {
-        public bool Success { get; } = Success;
-        public List<string?>? AffectedTables { get; } = AffectedTables;
+        public bool Success { get; }
+        public string Message { get; set; } = "Успешное добавление записи";
+        public List<string?>? AffectedTables { get; }
+
+        public AddRezult(List<string?>? affectedTables, bool success = true)
+        {
+            AffectedTables = affectedTables;
+            Success = success;
+        }
     }
 }

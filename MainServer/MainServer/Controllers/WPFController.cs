@@ -2,9 +2,10 @@
 using MainServer.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SharedLib.Contracts.Admin;
-using SharedLib.Enums;
 using SharedLib.Common;
+using SharedLib.Contracts.Admin;
+using SharedLib.Contracts.Request.Auth;
+using SharedLib.Enums;
 using SharedLib.Interfaces;
 using SharedLib.Models;
 
@@ -23,6 +24,7 @@ namespace MainServer.Controllers
         private readonly ILogger<WPFController> _logger;
         private readonly IStorageService _storageService;
         private readonly IMapper _mapper;
+        private readonly IAuthService _authService;
 
         private readonly string _garageEndpoint;
         private readonly string _bucketName;
@@ -38,7 +40,8 @@ namespace MainServer.Controllers
                              IConfiguration configuration,
                              ILogger<WPFController> logger,
                              IStorageService storageService,
-                             IMapper mapper)
+                             IMapper mapper,
+                             IAuthService authService)
         {
             _addObjectService = addObjectService;
             _deleteObjectService = deleteObjectService;
@@ -49,6 +52,7 @@ namespace MainServer.Controllers
             _logger = logger;
             _storageService = storageService;
             _mapper = mapper;
+            _authService = authService;
 
 
             _garageEndpoint = configuration["Garage:Endpoint"] ?? "";
@@ -306,6 +310,7 @@ namespace MainServer.Controllers
 
 
         [Route("update/comment/{id}")]
+        [RequireRole(UserRole.Admin)]
         [HttpPut]
         public async Task<IActionResult> UpdateComment([FromRoute] int id, [FromBody] PostCommentDto comment)
         {
@@ -328,6 +333,34 @@ namespace MainServer.Controllers
                     return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
                 }
                 _logger.LogError(ex, "Ошибка при обновлении комментария с id {Id}", id);
+                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
+            }
+        }
+
+        [Route("reset/password/{id}")]
+        [RequireRole(UserRole.Admin)]
+        [HttpPut]
+        public async Task<IActionResult> ForcedResetPassword([FromRoute] int id, [FromBody] ForcedPasswordResetRequest request)
+        {
+            try
+            {
+                var response = await _authService.ForcedPasswordResetAsync(id, request);
+                if (response.Success)
+                    return Ok(response);
+                else
+                {
+                    response.Message = response.Message ?? "Неожиданная ошибка при принудительной смене пароля";
+                    return StatusCode(500, response);
+                }                   
+            }
+            catch (Exception ex)
+            {
+                if (ex is ApiException)
+                {
+                    var apiEx = (ApiException)ex;
+                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
+                }
+                _logger.LogError(ex, "Ошибка при принудительной смене пароля для пользователя с id {Id}", id);
                 return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
             }
         }
@@ -495,16 +528,19 @@ namespace MainServer.Controllers
         [Route("add/user")]
         [HttpPost]
         [RequireRole(UserRole.Admin)]
-        public async Task<IActionResult> AddUser([FromBody] PostUserDto user)
+        public async Task<IActionResult> AddUser([FromBody] PostUserRequest request)
         {
             try
             {
-                var request = _mapper.Map<User>(user);
-                var response = await _addObjectService.AddAsync(request);
+                var response = await _authService.ForcedUserAddAsync(request);
                 if (response.Success)
                     return Ok(response);
                 else
+                {
+                    response.Message = response.Message ?? "Неожиданная ошибка при добавлении пользователя";
                     return StatusCode(500, response);
+                }
+                    
             }
             catch (Exception ex)
             {

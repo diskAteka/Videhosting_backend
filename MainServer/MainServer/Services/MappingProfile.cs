@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using SharedLib.Contracts.Admin;
+using SharedLib.Contracts.Request.Auth;
 using SharedLib.Models;
 
 namespace MainServer.Services

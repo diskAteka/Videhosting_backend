@@ -1,10 +1,12 @@
 ﻿using MainServer.Data;
 using MainServer.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using SharedLib.Common;
+using SharedLib.Contracts.Admin;
 using SharedLib.Contracts.Request.Auth;
 using SharedLib.Contracts.Response.Auth;
+using SharedLib.Contracts.RezultModels;
 using SharedLib.Enums;
-using SharedLib.Common;
 using SharedLib.Interfaces;
 using SharedLib.Models;
 using System.Data.Common;
@@ -146,5 +148,83 @@ namespace MainServer.Services
                 throw new ApiException(ErrorType.ServerError,"Внутренняя ошибка сервера");
             }
         }//Метод получение информации о пользователе
+
+
+        public async Task<UpdateRezult> ForcedPasswordResetAsync(int id, ForcedPasswordResetRequest request)
+        {
+            try
+            {
+                User? existingUser = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
+                if (existingUser == null)
+                    throw new ApiException(ErrorType.NotFound, $"Пользователь с ID {id} не найден");
+                (string hash, string salt) encryptedPassword = _passwordHasher.HashPassword(request.NewPassword);
+                existingUser.PasswordHash = encryptedPassword.hash;
+                existingUser.PasswordSalt = encryptedPassword.salt;
+
+                _context.Users.Update(existingUser);
+                var affectedTables = AffectedTableNames();
+                int affectedRows = await _context.SaveChangesAsync();
+
+                return new UpdateRezult(affectedTables, affectedRows > 0);
+            }
+            catch (DbException ex)
+            {
+                _logger.LogError(ex, "Ошибка БД при сбросе пароля");
+                throw new ApiException(ErrorType.ServerError, "Ошибка при сбросе пароля");
+            }
+            catch (Exception ex) when (ex is not ApiException)
+            {
+                _logger.LogError(ex, "Неожиданная ошибка при сбросе пароля");
+                throw new ApiException(ErrorType.ServerError, "Внутренняя ошибка сервера");
+            }
+        }//Метод для принудительного сброса пароля
+        public async Task<AddRezult> ForcedUserAddAsync(PostUserRequest request)
+        {
+            try
+            {
+                User? existingUser = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == request.Email);
+
+                if (existingUser != null)
+                    throw new ApiException(ErrorType.Conflict, "Пользователь с таким Email уже существует");
+
+                (string hash, string salt) passwordhash = _passwordHasher.HashPassword(request.Password);
+
+                User user = new User
+                {
+                    Name = request.UserName.Trim(),
+                    Email = request.Email.ToLowerInvariant(),
+                    PasswordHash = passwordhash.hash,
+                    PasswordSalt = passwordhash.salt,
+                    RegisteredAt = request.RegisteredAt,
+                    IsActive = request.IsActive,
+                    CanUpload = request.CanUpload
+                };
+
+                await _context.Users.AddAsync(user);
+                var affectedTables = AffectedTableNames();
+                int affectedRows = await _context.SaveChangesAsync();
+
+                return new AddRezult(affectedTables, affectedRows > 0);
+            }
+            catch (DbException ex)
+            {
+                _logger.LogError(ex, "Ошибка БД при добавлении пользователя");
+                throw new ApiException(ErrorType.ServerError, "Ошибка при входе в систему");
+            }
+            catch (Exception ex) when (ex is not ApiException)
+            {
+                _logger.LogError(ex, "Неожиданная ошибка при добавлении пользователя");
+                throw new ApiException(ErrorType.ServerError, "Внутренняя ошибка сервера");
+            }
+        }//Метод для принудительного добавления пользователя
+
+        private List<string?> AffectedTableNames()
+        {
+            return _context.ChangeTracker.Entries()
+                .Where(e => e.State != EntityState.Unchanged)
+                .Select(e => e.Metadata.GetTableName())
+                .Distinct()
+                .ToList();
+        }
     }
 }

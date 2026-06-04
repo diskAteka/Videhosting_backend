@@ -24,13 +24,14 @@ namespace MainServer.Services.DataBaseServices
                 if (entity == null)
                     throw new ApiException(ErrorType.NotFound, $"Объект типа {typeof(T)} с id {id} не найден");
                 dbSet.Remove(entity);
+                var affectedTables = AffectedTableNames(); //Получаем список затронутых таблиц до сохранения изменений
                 int affectedRows = await _context.SaveChangesAsync();
-                return new DeleteResult(affectedRows > 0, AffectedTableNames()); //Если удаление прошло успешно, возвращаем результат с информацией об измененных таблицах
+                return new DeleteResult(affectedTables, affectedRows > 0); //Если удаление прошло успешно, возвращаем результат с информацией об измененных таблицах
             }
             catch(Exception ex)
             {
                 Console.WriteLine($"Ошибка при удалении объекта типа {typeof(T)}, {ex.Message}");
-                return new DeleteResult(false, null); //При возникновении ошибки возвращаем неудачный результат с пустым массивом
+                return new DeleteResult(null, false); //При возникновении ошибки возвращаем неудачный результат с пустым массивом
             }
         }
         private List<string?> AffectedTableNames()
