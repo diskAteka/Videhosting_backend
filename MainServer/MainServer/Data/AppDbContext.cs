@@ -15,10 +15,11 @@ public partial class AppDbContext : DbContext
         : base(options)
     {
     }
-
     public virtual DbSet<Comment> Comments { get; set; }
 
     public virtual DbSet<DisLike> DisLikes { get; set; }
+
+    public virtual DbSet<Employee> Employees { get; set; }
 
     public virtual DbSet<Like> Likes { get; set; }
 
@@ -35,7 +36,7 @@ public partial class AppDbContext : DbContext
     {
         modelBuilder.Entity<Comment>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Comment__3214EC0757905008");
+            entity.HasKey(e => e.Id).HasName("PK__Comment__3214EC0777B85258");
 
             entity.ToTable("Comment");
 
@@ -43,21 +44,22 @@ public partial class AppDbContext : DbContext
 
             entity.HasIndex(e => new { e.VideoId, e.Date }, "IX_Comment_VideoId_Date");
 
+            entity.Property(e => e.Date).HasDefaultValueSql("(getutcdate())");
             entity.Property(e => e.Text).HasMaxLength(1000);
 
             entity.HasOne(d => d.User).WithMany(p => p.Comments)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Comment__UserId__59063A47");
+                .HasConstraintName("FK__Comment__UserId__5BE2A6F2");
 
             entity.HasOne(d => d.Video).WithMany(p => p.Comments)
                 .HasForeignKey(d => d.VideoId)
-                .HasConstraintName("FK__Comment__VideoId__5812160E");
+                .HasConstraintName("FK__Comment__VideoId__5AEE82B9");
         });
 
         modelBuilder.Entity<DisLike>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__DisLike__3214EC071D73A606");
+            entity.HasKey(e => e.Id).HasName("PK__DisLike__3214EC07DD447E75");
 
             entity.ToTable("DisLike");
 
@@ -66,16 +68,28 @@ public partial class AppDbContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.DisLikes)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__DisLike__UserId__6477ECF3");
+                .HasConstraintName("FK__DisLike__UserId__6754599E");
 
             entity.HasOne(d => d.Video).WithMany(p => p.DisLikes)
                 .HasForeignKey(d => d.VideoId)
-                .HasConstraintName("FK__DisLike__VideoId__6383C8BA");
+                .HasConstraintName("FK__DisLike__VideoId__66603565");
+        });
+
+        modelBuilder.Entity<Employee>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Employee__3214EC076E392F1E");
+
+            entity.ToTable("Employee");
+
+            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.Password).HasMaxLength(50);
+            entity.Property(e => e.Role).HasMaxLength(20);
+            entity.Property(e => e.UserName).HasMaxLength(50);
         });
 
         modelBuilder.Entity<Like>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Like__3214EC07888C3CD8");
+            entity.HasKey(e => e.Id).HasName("PK__Like__3214EC070D20842B");
 
             entity.ToTable("Like");
 
@@ -84,27 +98,38 @@ public partial class AppDbContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.Likes)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Like__UserId__60A75C0F");
+                .HasConstraintName("FK__Like__UserId__6383C8BA");
 
             entity.HasOne(d => d.Video).WithMany(p => p.LikesNavigation)
                 .HasForeignKey(d => d.VideoId)
-                .HasConstraintName("FK__Like__VideoId__5FB337D6");
+                .HasConstraintName("FK__Like__VideoId__628FA481");
         });
 
         modelBuilder.Entity<ServerLog>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__ServerLo__3214EC07FA3AF63A");
+            entity.HasKey(e => e.Id).HasName("PK__ServerLo__3214EC07A40AC643");
 
             entity.ToTable("ServerLog");
 
             entity.HasIndex(e => e.Date, "IX_ServerLog_Date");
 
-            entity.HasIndex(e => e.Type, "IX_ServerLog_Type");
+            entity.HasIndex(e => e.EmployeeId, "IX_ServerLog_EmployeeId");
+
+            entity.Property(e => e.ActionType).HasMaxLength(50);
+            entity.Property(e => e.AffectedTable).HasMaxLength(128);
+            entity.Property(e => e.Date)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Employee).WithMany(p => p.ServerLogs)
+                .HasForeignKey(d => d.EmployeeId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ServerLog_Employee");
         });
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__User__3214EC07736D858B");
+            entity.HasKey(e => e.Id).HasName("PK__User__3214EC073D4293A5");
 
             entity.ToTable("User");
 
@@ -113,6 +138,7 @@ public partial class AppDbContext : DbContext
             entity.HasIndex(e => e.Name, "IX_User_Name");
 
             entity.Property(e => e.Email).HasMaxLength(254);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.Name).HasMaxLength(100);
             entity.Property(e => e.PasswordHash)
                 .HasMaxLength(64)
@@ -122,11 +148,12 @@ public partial class AppDbContext : DbContext
                 .HasMaxLength(32)
                 .IsUnicode(false)
                 .IsFixedLength();
+            entity.Property(e => e.RegisteredAt).HasDefaultValueSql("(getutcdate())");
         });
 
         modelBuilder.Entity<Video>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Video__3214EC07D1F80721");
+            entity.HasKey(e => e.Id).HasName("PK__Video__3214EC07AC3F4D4F");
 
             entity.ToTable("Video");
 
@@ -136,6 +163,7 @@ public partial class AppDbContext : DbContext
 
             entity.HasIndex(e => e.Name, "IX_Video_Name");
 
+            entity.Property(e => e.DateUpload).HasDefaultValueSql("(getutcdate())");
             entity.Property(e => e.Description).HasMaxLength(2000);
             entity.Property(e => e.Link).HasMaxLength(500);
             entity.Property(e => e.Name).HasMaxLength(200);
@@ -144,12 +172,12 @@ public partial class AppDbContext : DbContext
             entity.HasOne(d => d.Author).WithMany(p => p.Videos)
                 .HasForeignKey(d => d.AuthorId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Video__AuthorId__5441852A");
+                .HasConstraintName("FK__Video__AuthorId__571DF1D5");
         });
 
         modelBuilder.Entity<View>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__View__3214EC07B27338D1");
+            entity.HasKey(e => e.Id).HasName("PK__View__3214EC0777CFEF53");
 
             entity.ToTable("View");
 
@@ -158,11 +186,11 @@ public partial class AppDbContext : DbContext
             entity.HasOne(d => d.User).WithMany(p => p.Views)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__View__UserId__68487DD7");
+                .HasConstraintName("FK__View__UserId__6B24EA82");
 
             entity.HasOne(d => d.Video).WithMany(p => p.ViewsNavigation)
                 .HasForeignKey(d => d.VideoId)
-                .HasConstraintName("FK__View__VideoId__6754599E");
+                .HasConstraintName("FK__View__VideoId__6A30C649");
         });
 
         OnModelCreatingPartial(modelBuilder);

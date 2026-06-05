@@ -1113,7 +1113,7 @@ namespace MainServer.Controllers
                 {
                     response.Message = response.Message ?? "Неожиданная ошибка при верификации видео";
                     return StatusCode(500, response);
-                }                   
+                }
             }
             catch (Exception ex)
             {
@@ -1124,6 +1124,39 @@ namespace MainServer.Controllers
                     return StatusCode(code, new { apiEx.Message });
                 }
                 _logger.LogError(ex, "Ошибка при верификации видео с id {Id}", id);
+                return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
+            }
+        }
+
+        #endregion
+
+        #region
+
+        [HttpPost]
+        [Route("log")]
+        [Authorize]
+        public async Task<IActionResult> LogAction([FromBody] ServerLog log)
+        {
+            try
+            {
+                var response = await _addObjectService.AddAsync(log);
+                if (response.Success)
+                    return Ok(response);
+                else
+                {
+                    response.Message = response.Message ?? "Неожиданная ошибка при добавлении лога";
+                    return StatusCode(500, response);
+                }
+            }
+            catch (Exception ex)
+            {
+                if (ex is ApiException)
+                {
+                    var apiEx = (ApiException)ex;
+                    int code = ApiException.GetStatusCode(apiEx.ErrorType);
+                    return StatusCode(code, new { apiEx.Message });
+                }
+                _logger.LogError(ex, "Ошибка при добавлении лога");
                 return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
             }
         }

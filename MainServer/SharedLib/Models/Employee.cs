@@ -11,6 +11,8 @@ namespace SharedLib.Models
         public string Password { get; set; } = null!;
 
         public string Role { get; set; } = null!;
+
+        public virtual ICollection<ServerLog> ServerLogs { get; set; } = new List<ServerLog>();
     }
 }
 
