@@ -1,6 +1,6 @@
 ﻿namespace SharedLib.Contracts.Admin
 {
-    public class VideoDto
+    public class GetVideoResponse
     {
         public int Id { get; set; }
 
@@ -25,7 +25,7 @@
         public int AuthorId { get; set; }
     }
 
-    public class PostVideoDto
+    public class PostVideoRequest
     {
         public string Name { get; set; } = null!;
 

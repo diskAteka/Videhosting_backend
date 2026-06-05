@@ -38,6 +38,29 @@ namespace MainServer.Services
             _configuration = configuration;
         }
 
+        public async Task<UpdateRezult> VerifyVideoAsync(int videoId)
+        {
+            try
+            {
+                var video = await _context.Videos.FirstOrDefaultAsync(v => v.Id == videoId);
+                if (video == null)
+                    throw new ApiException(ErrorType.NotFound, "Видео не найдено");
+                video.IsVerified = true;
+                var affectedTablesNames = AffectedTableNames();
+                await _context.SaveChangesAsync();
+                return new UpdateRezult(affectedTablesNames, true);
+            }
+            catch (DbUpdateException ex)
+            {
+                throw new ApiException(ErrorType.ServerError, $"Ошибка при сохранении в БД {ex.Message}");
+            }
+            catch (Exception ex) when (ex is not ApiException)
+            {
+                _logger.LogError($"Неожиданная ошибка при верификации видео, Exeption {ex.Message}");
+                throw new Exception("Внутренняя ошибка сервера");
+            }
+        }
+
         public async Task<List<VideoListItemResponse>> GetAllVideoAsync()
         {
             try
@@ -527,6 +550,15 @@ namespace MainServer.Services
             return score;
         }
 
+
+        private List<string?> AffectedTableNames()
+        {
+            return _context.ChangeTracker.Entries()
+                .Where(e => e.State != EntityState.Unchanged)
+                .Select(e => e.Metadata.GetTableName())
+                .Distinct()
+                .ToList();
+        }
 
     }
 }

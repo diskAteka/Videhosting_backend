@@ -1,6 +1,6 @@
 ﻿namespace SharedLib.Contracts.Admin
 {
-    public class ServerLogDto
+    public class GetServerLogResponse
     {
         public int Id { get; set; }
 

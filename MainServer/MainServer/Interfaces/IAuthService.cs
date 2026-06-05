@@ -12,5 +12,6 @@ namespace MainServer.Interfaces
         public Task<GetMeResultDto> GetMeAsync(int id);
         public Task<UpdateRezult>ForcedPasswordResetAsync(int id, ForcedPasswordResetRequest request);
         public Task<AddRezult> ForcedUserAddAsync(PostUserRequest request);
+        public Task<UpdateRezult> ForcedUserUpdateAsync(int id, PutUserRequest request);
     }//Интерфес описывает логику класса сервиса. Все методы асинхронные потому что они все будут выполнять запросы к БД.
 }

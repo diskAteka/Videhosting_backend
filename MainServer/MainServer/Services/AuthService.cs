@@ -218,6 +218,35 @@ namespace MainServer.Services
             }
         }//Метод для принудительного добавления пользователя
 
+        public Task<UpdateRezult> ForcedUserUpdateAsync(int id, PutUserRequest request)
+        {
+            try
+            {
+                User? existingUser = _context.Users.AsNoTracking().FirstOrDefault(u => u.Id == id);
+                if (existingUser == null)
+                    throw new ApiException(ErrorType.NotFound, $"Пользователь с ID {id} не найден");
+                existingUser.Name = request.Name.Trim();
+                existingUser.Email = request.Email.ToLowerInvariant();
+                existingUser.CanUpload = request.CanUpload;
+                existingUser.RegisteredAt = request.RegisteredAt;
+                existingUser.IsActive = request.IsActive;
+                _context.Users.Update(existingUser);
+                var affectedTables = AffectedTableNames();
+                int affectedRows = _context.SaveChanges();
+                return Task.FromResult(new UpdateRezult(affectedTables, affectedRows > 0));
+            }
+            catch (DbException ex)
+            {
+                _logger.LogError(ex, "Ошибка БД при обновлении пользователя");
+                throw new ApiException(ErrorType.ServerError, "Ошибка при обновлении пользователя");
+            }
+            catch (Exception ex) when (ex is not ApiException)
+            {
+                _logger.LogError(ex, "Неожиданная ошибка при обновлении пользователя");
+                throw new ApiException(ErrorType.ServerError, "Внутренняя ошибка сервера");
+            }
+        }//Метод для принудительного обновления информации о пользователе
+
         private List<string?> AffectedTableNames()
         {
             return _context.ChangeTracker.Entries()

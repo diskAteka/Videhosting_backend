@@ -9,20 +9,20 @@ namespace MainServer.Services
     {
         public MappingProfile()
         {
-            CreateMap<User, UserDto>();
-            CreateMap<Comment, CommentDto>();
-            CreateMap<Video, VideoDto>();
-            CreateMap<Like, LikeDto>();
-            CreateMap<DisLike, DislikeDto>();
-            CreateMap<View, ViewDto>();
-            CreateMap<ServerLog, ServerLogDto>();
+            CreateMap<User, GetUserResponse>();
+            CreateMap<Comment, GetCommentResponse>();
+            CreateMap<Video, GetVideoResponse>();
+            CreateMap<Like, GetLikeResponse>();
+            CreateMap<DisLike, GetDislikeResponse>();
+            CreateMap<View, GetViewResponse>();
+            CreateMap<ServerLog, GetServerLogResponse>();
 
-            CreateMap<PostCommentDto, Comment>();
-            CreateMap<PostVideoDto, Video>();
-            CreateMap<PostLikeDto, Like>();
-            CreateMap<PostDislikeDto, DisLike>();
-            CreateMap<PostViewDto, View>();
-            CreateMap<PostLikeDto, Like>();
+            CreateMap<PostPutCommentRequest, Comment>();
+            CreateMap<PostVideoRequest, Video>();
+            CreateMap<PostLikeRequest, Like>();
+            CreateMap<PostDislikeRequest, DisLike>();
+            CreateMap<PostViewRequest, View>();
+            CreateMap<PostLikeRequest, Like>();
             CreateMap<PostPutEmployeeRequest, Employee>();
         }
     }

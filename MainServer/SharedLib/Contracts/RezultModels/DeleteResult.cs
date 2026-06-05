@@ -1,6 +1,8 @@
-﻿namespace SharedLib.Contracts.RezultModels
+﻿using SharedLib.Interfaces;
+
+namespace SharedLib.Contracts.RezultModels
 {
-    public class DeleteResult
+    public class DeleteResult : IRezult
     {
         public bool Success { get; }
         public string Message { get; set; } = "Успешное удаление записи";

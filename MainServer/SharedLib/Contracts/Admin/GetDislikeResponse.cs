@@ -1,7 +1,6 @@
-﻿
-namespace SharedLib.Contracts.Admin
+﻿namespace SharedLib.Contracts.Admin
 {
-    public class LikeDto
+    public class GetDislikeResponse
     {
         public int Id { get; set; }
 
@@ -10,7 +9,7 @@ namespace SharedLib.Contracts.Admin
         public int UserId { get; set; }
     }
 
-    public class PostLikeDto
+    public class PostDislikeRequest
     {
         public int VideoId { get; set; }
         public int UserId { get; set; }

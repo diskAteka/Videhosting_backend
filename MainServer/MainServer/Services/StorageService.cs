@@ -121,7 +121,7 @@ namespace MainServer.Services
                     $"Не удалось загрузить {objectKey}. Статус: {response.HttpStatusCode}");
             }
 
-            _logger.LogInformation("Uploaded {ObjectKey} to bucket {BucketName}" ,objectKey, _bucketName);
+            _logger.LogInformation("Загружено {ObjectKey} в бакет {BucketName}" ,objectKey, _bucketName);
         }
 
         private async Task VerifyObjectExistsAsync(string objectKey)

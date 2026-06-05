@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SharedLib.Common;
 using SharedLib.Contracts.Admin;
-using SharedLib.Contracts.Request.Auth;
 using SharedLib.Enums;
 using SharedLib.Interfaces;
 using SharedLib.Models;
@@ -259,7 +258,7 @@ namespace MainServer.Controllers
         [Route("update/video/{id}")]
         [HttpPut]
         [RequireRole(UserRole.Admin)]
-        public async Task<IActionResult> UpdateVideo([FromRoute] int id, [FromBody] PostVideoDto video)
+        public async Task<IActionResult> UpdateVideo([FromRoute] int id, [FromBody] PostVideoRequest video)
         {
             try
             {
@@ -285,16 +284,18 @@ namespace MainServer.Controllers
         [Route("update/user/{id}")]
         [HttpPut]
         [RequireRole(UserRole.Admin)]
-        public async Task<IActionResult> UpdateUser([FromRoute] int id, [FromBody] PostUserDto user)
+        public async Task<IActionResult> UpdateUser([FromRoute] int id, [FromBody] PutUserRequest request)
         {
             try
             {
-                var request = _mapper.Map<User>(user);
-                var response = await _updateObjectService.UpdateAsync(request);
+                var response = await _authService.ForcedUserUpdateAsync(id, request);
                 if (response.Success)
                     return Ok(response);
                 else
+                {
+                    response.Message = response.Message ?? "Неожиданная ошибка при обновлении пользователя";
                     return StatusCode(500, response);
+                }                   
             }
             catch (Exception ex)
             {
@@ -312,7 +313,7 @@ namespace MainServer.Controllers
         [Route("update/comment/{id}")]
         [RequireRole(UserRole.Admin)]
         [HttpPut]
-        public async Task<IActionResult> UpdateComment([FromRoute] int id, [FromBody] PostCommentDto comment)
+        public async Task<IActionResult> UpdateComment([FromRoute] int id, [FromBody] PostPutCommentRequest comment)
         {
             try
             {
@@ -398,7 +399,7 @@ namespace MainServer.Controllers
         [Route("add/video")]
         [HttpPost]
         [RequireRole(UserRole.Admin)]
-        public async Task<IActionResult> AddVideo([FromBody] PostVideoDto video)
+        public async Task<IActionResult> AddVideo([FromBody] PostVideoRequest video)
         {
             try
             {
@@ -424,7 +425,7 @@ namespace MainServer.Controllers
         [Route("add/comment")]
         [HttpPost]
         [RequireRole(UserRole.Admin)]
-        public async Task<IActionResult> AddComment([FromBody] PostCommentDto comment)
+        public async Task<IActionResult> AddComment([FromBody] PostPutCommentRequest comment)
         {
             try
             {
@@ -450,7 +451,7 @@ namespace MainServer.Controllers
         [Route("add/like")]
         [HttpPost]
         [RequireRole(UserRole.Admin)]
-        public async Task<IActionResult> AddLike([FromBody] PostLikeDto like)
+        public async Task<IActionResult> AddLike([FromBody] PostLikeRequest like)
         {
             try
             {
@@ -476,7 +477,7 @@ namespace MainServer.Controllers
         [Route("add/dislike")]
         [HttpPost]
         [RequireRole(UserRole.Admin)]
-        public async Task<IActionResult> AddDislike([FromBody] PostDislikeDto dislike)
+        public async Task<IActionResult> AddDislike([FromBody] PostDislikeRequest dislike)
         {
             try
             {
@@ -502,7 +503,7 @@ namespace MainServer.Controllers
         [Route("add/view")]
         [HttpPost]
         [RequireRole(UserRole.Admin)]
-        public async Task<IActionResult> AddView([FromBody] PostViewDto view)
+        public async Task<IActionResult> AddView([FromBody] PostViewRequest view)
         {
             try
             {
@@ -594,7 +595,7 @@ namespace MainServer.Controllers
                 if (videos != null)
                 { 
                 
-                    var response = _mapper.Map<List<VideoDto>>(videos);
+                    var response = _mapper.Map<List<GetVideoResponse>>(videos);
                     return Ok(response);
                 }
                 else
@@ -622,7 +623,7 @@ namespace MainServer.Controllers
                 var users = await _getObjectService.GetObjectsAsync<User>(parameters);
                 if (users != null)
                 {
-                    var response = _mapper.Map<List<UserDto>>(users);
+                    var response = _mapper.Map<List<GetUserResponse>>(users);
                     return Ok(response);
                 }
                 else
@@ -651,7 +652,7 @@ namespace MainServer.Controllers
                 var comments = await _getObjectService.GetObjectsAsync<Comment>(parameters);
                 if (comments != null)
                 {
-                    var response = _mapper.Map<List<CommentDto>>(comments);
+                    var response = _mapper.Map<List<GetCommentResponse>>(comments);
                     return Ok(response);
                 }
                 else
@@ -679,7 +680,7 @@ namespace MainServer.Controllers
                 var likes = await _getObjectService.GetObjectsAsync<Like>(parameters);
                 if (likes != null)
                 {
-                    var response = _mapper.Map<List<LikeDto>>(likes);
+                    var response = _mapper.Map<List<GetLikeResponse>>(likes);
                     return Ok(response);
                 }
                 else
@@ -707,7 +708,7 @@ namespace MainServer.Controllers
                 var dislikes = await _getObjectService.GetObjectsAsync<DisLike>(parameters);
                 if (dislikes != null)
                 {
-                    var response = _mapper.Map<List<DislikeDto>>(dislikes);
+                    var response = _mapper.Map<List<GetDislikeResponse>>(dislikes);
                     return Ok(response);
                 }
                 else
@@ -735,7 +736,7 @@ namespace MainServer.Controllers
                 var views = await _getObjectService.GetObjectsAsync<View>(parameters);
                 if (views != null)
                 {
-                    var response = _mapper.Map<List<ViewDto>>(views);
+                    var response = _mapper.Map<List<GetViewResponse>>(views);
                     return Ok(response);
                 }
                 else
@@ -763,7 +764,7 @@ namespace MainServer.Controllers
                 var userVideos = await _videoService.GetThisUserVideos(userId);
                 if (userVideos != null)
                 {
-                    var mappedResponse = _mapper.Map<List<VideoDto>>(userVideos);
+                    var mappedResponse = _mapper.Map<List<GetVideoResponse>>(userVideos);
                     return Ok(mappedResponse);
                 }
                 else
@@ -853,7 +854,7 @@ namespace MainServer.Controllers
             try
             {
                 var comment = await _getObjectService.GetObjectAsync<Comment>(id);
-                var response = _mapper.Map<CommentDto>(comment);
+                var response = _mapper.Map<GetCommentResponse>(comment);
                 return Ok(response);
             }
             catch(Exception ex)
@@ -876,7 +877,7 @@ namespace MainServer.Controllers
             try
             {
                 var user = await _getObjectService.GetObjectAsync<User>(id);
-                var response = _mapper.Map<UserDto>(user);  
+                var response = _mapper.Map<GetUserResponse>(user);  
                 return Ok(response);
             }
             catch (Exception ex)
@@ -901,7 +902,7 @@ namespace MainServer.Controllers
             try
             {
                 var video = await _getObjectService.GetObjectAsync<Video>(id);
-                var response = _mapper.Map<VideoDto>(video);    
+                var response = _mapper.Map<GetVideoResponse>(video);    
                 return Ok(response);
             }
             catch (Exception ex)
@@ -925,7 +926,7 @@ namespace MainServer.Controllers
             try
             {
                 var serverLog = await _getObjectService.GetObjectAsync<ServerLog>(id);
-                var response = _mapper.Map<ServerLogDto>(serverLog);
+                var response = _mapper.Map<GetServerLogResponse>(serverLog);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -971,7 +972,7 @@ namespace MainServer.Controllers
             try
             {
                 var view = await _getObjectService.GetObjectAsync<View>(id);
-                var response = _mapper.Map<ViewDto>(view);
+                var response = _mapper.Map<GetViewResponse>(view);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -995,7 +996,7 @@ namespace MainServer.Controllers
             try
             {
                 var like = await _getObjectService.GetObjectAsync<Like>(id);
-                var response = _mapper.Map<LikeDto>(like);
+                var response = _mapper.Map<GetLikeResponse>(like);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -1019,7 +1020,7 @@ namespace MainServer.Controllers
             try
             {
                 var dislike = await _getObjectService.GetObjectAsync<DisLike>(id);
-                var response = _mapper.Map<DislikeDto>(dislike);
+                var response = _mapper.Map<GetDislikeResponse>(dislike);
                 return Ok(response);
             }
             catch (Exception ex)
@@ -1061,6 +1062,68 @@ namespace MainServer.Controllers
                     int code = ApiException.GetStatusCode(apiEx.ErrorType);
                     return StatusCode(code, new { Message = apiEx.Message });
                 }
+                return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
+            }
+        }
+
+        #endregion
+
+        #region getPoster endpont
+
+        [HttpGet]
+        [Route("video/poster/{id}")]
+        [RequireRole(UserRole.Virifier)]
+        public async Task<IActionResult> GetPoster([FromRoute] int videoId)
+        {
+            try
+            {
+                var video = await _videoService.GetVideoMetadataAsync(videoId);
+                if (video == null)
+                    return NotFound("Видео не найдено");
+                var response = await _storageService.GetObjectAsync(_bucketName, video.Poster);
+                return new FileStreamResult(response.ResponseStream, response.Headers.ContentType ?? "image/jpeg");
+            }
+            catch (Exception ex)
+            {
+                if (ex is ApiException)
+                {
+                    var apiEx = (ApiException)ex;
+                    int code = ApiException.GetStatusCode(apiEx.ErrorType);
+                    return StatusCode(code, new { apiEx.Message });
+                }
+                return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
+            }
+        }
+
+        #endregion
+
+        #region verify video endpoint
+
+        [HttpPut]
+        [Route("video/verify/{id}")]
+        [RequireRole(UserRole.Virifier)]
+        public async Task<IActionResult> VerifyVideo([FromRoute] int id)
+        {
+            try
+            {
+                var response = await _videoService.VerifyVideoAsync(id);
+                if (response.Success)
+                    return Ok(response);
+                else
+                {
+                    response.Message = response.Message ?? "Неожиданная ошибка при верификации видео";
+                    return StatusCode(500, response);
+                }                   
+            }
+            catch (Exception ex)
+            {
+                if (ex is ApiException)
+                {
+                    var apiEx = (ApiException)ex;
+                    int code = ApiException.GetStatusCode(apiEx.ErrorType);
+                    return StatusCode(code, new { apiEx.Message });
+                }
+                _logger.LogError(ex, "Ошибка при верификации видео с id {Id}", id);
                 return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
             }
         }

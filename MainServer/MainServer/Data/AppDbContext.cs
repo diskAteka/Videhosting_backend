@@ -100,12 +100,6 @@ public partial class AppDbContext : DbContext
             entity.HasIndex(e => e.Date, "IX_ServerLog_Date");
 
             entity.HasIndex(e => e.Type, "IX_ServerLog_Type");
-
-            entity.HasIndex(e => new { e.UserId, e.Date }, "IX_ServerLog_UserId_Date");
-
-            entity.HasOne(d => d.User).WithMany(p => p.ServerLogs)
-                .HasForeignKey(d => d.UserId)
-                .HasConstraintName("FK__ServerLog__UserI__5CD6CB2B");
         });
 
         modelBuilder.Entity<User>(entity =>

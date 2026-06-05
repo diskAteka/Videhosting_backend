@@ -18,6 +18,7 @@ namespace MainServer.Interfaces
         public Task<int> NewVideoAsync(VideoUploadRequest request, int AuthorId);
         public Task<List<UserVideoListItemDto>> GetThisUserVideos(int userId);
         public Task<DeleteResult> DeleteVideoAsync(int videoId);
+        public Task<UpdateRezult> VerifyVideoAsync(int videoId);
 
     }
 }
