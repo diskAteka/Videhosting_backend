@@ -1,36 +1,57 @@
-using MainServer.Data;
+п»їusing MainServer.Data;
 using MainServer.Interfaces;
-using MainServer.Services;
+using MainServer.Middleware;
 using MainServer.Services.DataBaseServices;
+using MainServer.Services.ForController;
+using MainServer.Services.ForService;
+using MainServer.Services.Main;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using SharedLib.Enums;
-using SharedLib.Common;
 using SharedLib.Interfaces;
 using System.Text;
 
-var builder = WebApplication.CreateBuilder(args); //Это экземляр класса-настройщика сервера
+var builder = WebApplication.CreateBuilder(args);
 
-var jwdSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()
+var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()
     ?? throw new InvalidOperationException("JwtSettings section is missing or invalid.");
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is missing.");
 
-
-//Настройка портов которые будет прослушивать сервер
-//builder.WebHost.UseUrls("http://localhost:8080");
-
-
-//builder.Services.AddScoped<какой тип просят, что вернуть>
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString)
-    .LogTo(Console.WriteLine, LogLevel.Information));
+           .LogTo(Console.WriteLine, LogLevel.Information));
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
-builder.Services.AddSingleton(jwdSettings);
+
+builder.Services.AddSingleton(jwtSettings);
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSettings.Issuer,
+            ValidAudience = jwtSettings.Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey))
+        };
+    });
+builder.Services.AddAuthorization();
+
+builder.Services.Configure<GarageOptions>(builder.Configuration.GetSection(GarageOptions.Section));
+builder.Services.AddSingleton<StoragePathBuilder>(sp =>
+{
+    var opts = sp.GetRequiredService<IOptions<GarageOptions>>().Value;
+    return new StoragePathBuilder(opts.VideoPrefix, opts.PosterPrefix);
+});
+builder.Services.AddSingleton<S3ClientWrapper>();
+
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<ITokenService, TokenService>();
@@ -38,33 +59,10 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IStorageService, StorageService>();
 builder.Services.AddScoped<IVideoService, VideoService>();
 builder.Services.AddScoped<IAddObjectService, AddObjectService>();
-builder.Services.AddScoped<IUpdateObjectService,  UpdateObjectService>();
+builder.Services.AddScoped<IUpdateObjectService, UpdateObjectService>();
 builder.Services.AddScoped<IGetObjectService, GetObjectSevice>();
 builder.Services.AddScoped<IDeleteObjectService, DeleteObjectService>();
-
 builder.Services.AddScoped<PosterService>();
-
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(option =>
-{
-    option.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = jwdSettings.Issuer,
-        ValidAudience = jwdSettings.Audience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwdSettings.SecretKey))
-    };
-});
-builder.Services.AddAuthorization();
-
-//Эти команды записывают отладочную онформацию, необходимую для тестирования
-//Отладка расположена по этому адресу https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-
 
 var allowedOrigins = builder.Configuration.GetSection("CorsOrigins").Get<string[]>();
 builder.Services.AddCors(options =>
@@ -78,57 +76,25 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddHttpContextAccessor();
-
+var maxRequestBodySize = 2L * 1024 * 1024 * 1024; 
 builder.Services.Configure<FormOptions>(options =>
 {
     options.ValueLengthLimit = int.MaxValue;
-    options.MultipartBodyLengthLimit = 2L * 1024L * 1024L * 1024L; // 2GB
+    options.MultipartBodyLengthLimit = maxRequestBodySize;
     options.MemoryBufferThreshold = int.MaxValue;
-});//Указываю что сервер должен поддерживать файлы до 2ух гигобайт
+});
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.Limits.MaxRequestBodySize = 2L * 1024L * 1024L * 1024L; // 2GB
+    options.Limits.MaxRequestBodySize = maxRequestBodySize;
 });
 
-//Регистрация сервисов
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
-
-
 
 var app = builder.Build();
 
-app.UseExceptionHandler(new ExceptionHandlerOptions { ExceptionHandler = HandleException });
-
-async Task HandleException(HttpContext context)
-{
-    var exceptonHandlerFeature = context.Features.Get<IExceptionHandlerFeature>();
-    var exception = exceptonHandlerFeature?.Error;
-
-    int statusCode = 500;
-    string errorType = ErrorType.ServerError.ToString();
-    string message = "Internal Server Error";
-
-
-    if (exception is ApiException apiException)
-    {
-        statusCode = ApiException.GetStatusCode(apiException.ErrorType);
-        errorType = apiException.ErrorType.ToString();
-        message = apiException.Message;
-    }
-
-    context.Response.StatusCode = statusCode;
-    context.Response.ContentType = "application/json";
-
-    var response = new
-    {
-        ErrorType = errorType,
-        Message = message,
-        Timestamp = DateTime.UtcNow
-    };
-
-    await context.Response.WriteAsJsonAsync(response);
-}
+app.UseGlobalExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {
@@ -136,14 +102,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-//Настройка сервера
-//app.UseHttpsRedirection(); Это не нужно, поскольку сервер будет общаться с Nginx,
-//который будет обрабатывать HTTPS-соединения. Включение этого middleware может вызвать проблемы с перенаправлением,
-//так как Nginx уже обрабатывает SSL. Поэтому его следует отключить, чтобы избежать конфликтов и обеспечить корректную работу сервера за прокси.
 app.UseCors("FrontendPolicy");
-app.UseAuthentication();//Распознает пользователя, запускает контроллер с атрибутом [Authorize]  
+app.UseAuthentication();
 app.UseAuthorization();
-app.MapControllers(); 
-
+app.MapControllers();
 
 app.Run();

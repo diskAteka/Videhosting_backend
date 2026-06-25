@@ -1,10 +1,9 @@
-﻿using Amazon.S3;
-using MainServer.Interfaces;
+﻿using MainServer.Interfaces;
+using MainServer.Services.Main;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SharedLib.Contracts.Request.Video;
 using SharedLib.Contracts.Response.Video;
-using SharedLib.Common;
 using SharedLib.Interfaces;
 using System.Security.Claims;
 

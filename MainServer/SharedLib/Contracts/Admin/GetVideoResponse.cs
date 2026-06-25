@@ -1,4 +1,6 @@
-﻿namespace SharedLib.Contracts.Admin
+﻿using System.IO;
+
+namespace SharedLib.Contracts.Admin
 {
     public class GetVideoResponse
     {

@@ -1,4 +1,4 @@
-﻿namespace SharedLib.Common
+﻿namespace MainServer.Services.Main
 
 {
     public class JwtSettings

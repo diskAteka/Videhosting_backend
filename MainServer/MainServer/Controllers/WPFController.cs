@@ -1,10 +1,11 @@
 ﻿using AutoMapper;
+using MainServer.Enum;
 using MainServer.Interfaces;
+using MainServer.Services;
+using MainServer.Services.Main;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SharedLib.Common;
 using SharedLib.Contracts.Admin;
-using SharedLib.Enums;
 using SharedLib.Interfaces;
 using SharedLib.Models;
 
@@ -1130,7 +1131,7 @@ namespace MainServer.Controllers
 
         #endregion
 
-        #region
+        #region log endpoint
 
         [HttpPost]
         [Route("log")]
@@ -1157,6 +1158,32 @@ namespace MainServer.Controllers
                     return StatusCode(code, new { apiEx.Message });
                 }
                 _logger.LogError(ex, "Ошибка при добавлении лога");
+                return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
+            }
+        }
+
+        #endregion
+
+        #region employee login endpoint
+
+        [HttpGet]
+        [Route("login")]
+        public async Task<IActionResult> EmployeeLogin([FromBody] EmployeeLoginRequest request)
+        {
+            try
+            {
+                string token = await _authService.EmployeeLoginAsync(request);
+                return Ok(new { Token = token });
+            }
+            catch (Exception ex)
+            {
+                if (ex is ApiException)
+                {
+                    var apiEx = (ApiException)ex;
+                    int code = ApiException.GetStatusCode(apiEx.ErrorType);
+                    return StatusCode(code, new { apiEx.Message });
+                }
+                _logger.LogError(ex, "Ошибка при авторизации сотрудника");
                 return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
             }
         }

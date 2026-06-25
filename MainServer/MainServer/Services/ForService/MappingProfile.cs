@@ -1,9 +1,8 @@
 ﻿using AutoMapper;
 using SharedLib.Contracts.Admin;
-using SharedLib.Contracts.Request.Auth;
 using SharedLib.Models;
 
-namespace MainServer.Services
+namespace MainServer.Services.ForService
 {
     public class MappingProfile : Profile
     {

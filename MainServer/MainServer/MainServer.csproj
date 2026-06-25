@@ -14,8 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Recurce\placeholder-256.png" />
-    <None Remove="Recurce\placeholder.png" />
+    <None Remove="Resources\placeholder-256.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -34,7 +33,6 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Minio" Version="7.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.15.0" />
     <PackageReference Include="System.Linq.Dynamic.Core" Version="1.7.2" />
@@ -51,7 +49,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Recurce\placeholder.png">
+    <Resource Include="Resources\placeholder.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Resource>
   </ItemGroup>

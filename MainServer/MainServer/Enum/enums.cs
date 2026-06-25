@@ -1,6 +1,6 @@
 ﻿using SharedLib.Models;
 
-namespace SharedLib.Enums
+namespace MainServer.Enum
 {
     public enum Tables
     {

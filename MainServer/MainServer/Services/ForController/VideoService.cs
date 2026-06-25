@@ -1,18 +1,17 @@
 ﻿using MainServer.Data;
+using MainServer.Enum;
 using MainServer.Interfaces;
+using MainServer.Services.Main;
 using Microsoft.EntityFrameworkCore;
-using SharedLib.Common;
-using SharedLib.Contracts.Admin;
 using SharedLib.Contracts.Request.Video;
 using SharedLib.Contracts.Response.Video;
 using SharedLib.Contracts.RezultModels;
-using SharedLib.Enums;
 using SharedLib.Models;
 using System.Data.Common;
 using View = SharedLib.Models.View;
 
 
-namespace MainServer.Services
+namespace MainServer.Services.ForController
 {
     public class VideoService : IVideoService
     {
@@ -97,7 +96,7 @@ namespace MainServer.Services
         {
             try
             {
-                bool isViewed = await _context.Views.FirstOrDefaultAsync(v => (v.UserId == userId) && (v.VideoId == videoId)) == null ? false : true;
+                bool isViewed = await _context.Views.FirstOrDefaultAsync(v => v.UserId == userId && v.VideoId == videoId) == null ? false : true;
                 if (!isViewed)
                 {
                     await _context.AddAsync(new View { UserId = userId, VideoId = videoId });
@@ -118,8 +117,8 @@ namespace MainServer.Services
 
                 //Если в таблице с лайками есть запись с этим пользователем и с этим видео, значит этот лайкнул посмотрел это видео. 
                 //Аналогично для других флагов
-                bool isLiked = await _context.Likes.FirstOrDefaultAsync(l => (l.UserId == userId) && (l.VideoId == videoId)) == null ? false : true;
-                bool isDisliked = await _context.DisLikes.FirstOrDefaultAsync(d => (d.UserId == userId) && (d.VideoId == videoId)) == null ? false : true;
+                bool isLiked = await _context.Likes.FirstOrDefaultAsync(l => l.UserId == userId && l.VideoId == videoId) == null ? false : true;
+                bool isDisliked = await _context.DisLikes.FirstOrDefaultAsync(d => d.UserId == userId && d.VideoId == videoId) == null ? false : true;
                 List<CommentResponse> Comments = c.Select(c => new CommentResponse
                 {
                     AuthorId = c.UserId,
@@ -178,7 +177,7 @@ namespace MainServer.Services
                     .Where(v => v.IsVerified)
                     .Include(v => v.Author)
                     .Where(v => v.Name.ToLower().Contains(searchLower) ||
-                               (v.Description != null && v.Description.ToLower().Contains(searchLower)));
+                               v.Description != null && v.Description.ToLower().Contains(searchLower));
 
                 // Выполняем в памяти для сложной сортировки
                 var videos = await videoQuery.ToListAsync();
@@ -289,8 +288,8 @@ namespace MainServer.Services
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                Like? existLike = await _context.Likes.FirstOrDefaultAsync(l => (l.UserId == userId) && (l.VideoId == videoId));
-                DisLike? existDislike = await _context.DisLikes.FirstOrDefaultAsync(d => (d.UserId == userId) && (d.VideoId == videoId));
+                Like? existLike = await _context.Likes.FirstOrDefaultAsync(l => l.UserId == userId && l.VideoId == videoId);
+                DisLike? existDislike = await _context.DisLikes.FirstOrDefaultAsync(d => d.UserId == userId && d.VideoId == videoId);
 
                 if (IsLike)
                 {

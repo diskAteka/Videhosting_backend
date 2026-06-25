@@ -1,7 +1,7 @@
 ﻿using MainServer.Interfaces;
+using MainServer.Services.Main;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SharedLib.Common;
 using SharedLib.Contracts.Request.Auth;
 using SharedLib.Contracts.Response.Auth;
 using System.Security.Claims;

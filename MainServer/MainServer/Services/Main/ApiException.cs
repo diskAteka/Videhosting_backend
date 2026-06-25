@@ -1,6 +1,6 @@
-﻿using SharedLib.Enums;
+﻿using MainServer.Enum;
 
-namespace SharedLib.Common
+namespace MainServer.Services.Main
 {
     public class ApiException : Exception
     {

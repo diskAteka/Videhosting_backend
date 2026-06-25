@@ -1,17 +1,17 @@
 ﻿using MainServer.Data;
 using MainServer.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using SharedLib.Common;
 using SharedLib.Contracts.Admin;
 using SharedLib.Contracts.Request.Auth;
 using SharedLib.Contracts.Response.Auth;
 using SharedLib.Contracts.RezultModels;
-using SharedLib.Enums;
+using MainServer.Enum;
 using SharedLib.Interfaces;
 using SharedLib.Models;
 using System.Data.Common;
+using MainServer.Services.Main;
 
-namespace MainServer.Services
+namespace MainServer.Services.ForController
 {
     public class AuthService : IAuthService //Этот сервис будет выполнять запросы в БД.
     {
@@ -178,6 +178,34 @@ namespace MainServer.Services
                 throw new ApiException(ErrorType.ServerError, "Внутренняя ошибка сервера");
             }
         }//Метод для принудительного сброса пароля
+
+        public async Task<string> EmployeeLoginAsync(EmployeeLoginRequest request)
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(request.Username)
+                    && !string.IsNullOrEmpty(request.Password))
+                {
+                    var existingEmployee = await _context.Employees.AsNoTracking().FirstOrDefaultAsync(e => e.UserName == request.Username);
+                    if (existingEmployee == null) throw new ApiException(ErrorType.NotFound, "Сотрудник с таким логином не найден");
+                    if (existingEmployee.Password != request.Password) throw new ApiException(ErrorType.Unauthorized, "Неверный пароль");
+                    string token = _tokenService.GenerateEmployeeToken(existingEmployee.Id, existingEmployee.UserName, existingEmployee.Role);
+                    return token;
+                }
+                else throw new ApiException(ErrorType.ValidationError, "Неверный формат входящих данных");
+            }
+            catch (DbException ex)
+            {
+                _logger.LogError(ex, "Ошибка БД при сбросе пароля");
+                throw new ApiException(ErrorType.ServerError, "Ошибка при сбросе пароля");
+            }
+            catch (Exception ex) when (ex is not ApiException)
+            {
+                _logger.LogError(ex, "Неожиданная ошибка при сбросе пароля");
+                throw new ApiException(ErrorType.ServerError, "Внутренняя ошибка сервера");
+            }
+        }
+
         public async Task<AddRezult> ForcedUserAddAsync(PostUserRequest request)
         {
             try

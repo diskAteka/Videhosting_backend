@@ -1,8 +1,7 @@
-﻿using Microsoft.Extensions.Hosting.Internal;
-using Xabe.FFmpeg;
+﻿using Xabe.FFmpeg;
 
 
-namespace MainServer.Services
+namespace MainServer.Services.ForController
 {
     public class PosterService
     {
