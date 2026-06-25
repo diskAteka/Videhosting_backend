@@ -16,6 +16,7 @@ WORKDIR /app
 COPY --from=build /app/publish .
 
 RUN mkdir -p /MainServer/temp_videos
+RUN apk add ffmpeg
 
 EXPOSE 8080
 

@@ -47,7 +47,8 @@ namespace MainServer.Services.ForService
                 BucketName = _bucketName,
                 Key = objectKey,
                 FilePath = filePath,
-                ContentType = contentType
+                ContentType = contentType,
+                UseChunkEncoding = false
             };
 
             await _client.PutObjectAsync(request);

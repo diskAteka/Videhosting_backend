@@ -1,6 +1,5 @@
 ﻿using Xabe.FFmpeg;
 
-
 namespace MainServer.Services.ForController
 {
     public class PosterService
@@ -31,12 +30,14 @@ namespace MainServer.Services.ForController
 
                 return fileName;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
+                var placeholderSource = Path.Combine(AppContext.BaseDirectory, "Resources", "placeholder.png");
+                var placeholderDest = Path.Combine(AppContext.BaseDirectory, "Resources", "placeholder1.png");
                 Console.WriteLine($"Ошибка при создании постера, был использован постер по умолчанию. Текст ошибки: {ex.Message}");
-                File.Copy(@"Recurce\placeholder.png", @"Recurce\placeholder1.png");
-                return @"Recurce\placeholder1.png";
-            }            
+                File.Copy(placeholderSource, placeholderDest, overwrite: true);
+                return placeholderDest;
+            }
 
         }
     }
