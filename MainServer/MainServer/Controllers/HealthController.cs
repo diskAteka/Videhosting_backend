@@ -1,6 +1,7 @@
 ﻿using MainServer.Data;
 using MainServer.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+
 namespace MainServer.Controllers
 {
     [ApiController]
@@ -24,48 +25,53 @@ namespace MainServer.Controllers
         [HttpGet("check")]
         public async Task<IActionResult> CheckServices()
         {
+            var databaseStatus = await CheckDatabaseAsync();
+            var storageStatus = await CheckStorageAsync();
+
             var result = new
             {
-                Status = "OK",
+                Status = databaseStatus.Status == "Healthy" && storageStatus.Status == "Healthy" ? "OK" : "Degraded",
                 Timestamp = DateTime.UtcNow,
-                Database = new { Status = "Unknown", Message = "" },
-                Storage = new { Status = "Unknown", Message = "" }
+                Database = databaseStatus,
+                Storage = storageStatus
             };
+
+            bool isHealthy = databaseStatus.Status == "Healthy" && storageStatus.Status == "Healthy";
+            return isHealthy ? Ok(result) : StatusCode(503, result);
+        }
+
+        private async Task<ServiceStatus> CheckDatabaseAsync()
+        {
             try
             {
                 bool canConnect = await _dbContext.Database.CanConnectAsync();
-                if (canConnect)
-                    result = result with { Database = new { Status = "Healthy", Message = "Подключение к базе данных успешно" } };
-                else
-                {
-                    result = result with { Database = new { Status = "Unhealthy", Message = "Не удалось подключиться к базе данных" } };
-                    return StatusCode(503, result);
-                }
+                return canConnect
+                    ? new ServiceStatus("Healthy", "Подключение к базе данных успешно")
+                    : new ServiceStatus("Unhealthy", "Не удалось подключиться к базе данных");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Ошибка при проверке базы данных");
-                result = result with { Database = new { Status = "Error", Message = $"Ошибка: {ex.Message}" } };
-                return StatusCode(503, result);
+                return new ServiceStatus("Error", $"Ошибка: {ex.Message}");
             }
+        }
+
+        private async Task<ServiceStatus> CheckStorageAsync()
+        {
             try
             {
                 bool storageAvailable = await _storageService.CheckStorageAvailabilityAsync();
-                if (storageAvailable)
-                    result = result with { Storage = new { Status = "Healthy", Message = "Облачное хранилище доступно" } };
-                else
-                {
-                    result = result with { Storage = new { Status = "Unhealthy", Message = "Облачное хранилище недоступно" } };
-                    return StatusCode(503, result);
-                }
+                return storageAvailable
+                    ? new ServiceStatus("Healthy", "Облачное хранилище доступно")
+                    : new ServiceStatus("Unhealthy", "Облачное хранилище недоступно");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Ошибка при проверке облачного хранилища");
-                result = result with { Storage = new { Status = "Error", Message = $"Ошибка: {ex.Message}" } };
-                return StatusCode(503, result);
+                return new ServiceStatus("Error", $"Ошибка: {ex.Message}");
             }
-            return Ok(result);
         }
+
+        private record ServiceStatus(string Status, string Message);
     }
 }

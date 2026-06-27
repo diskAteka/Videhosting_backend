@@ -1,10 +1,8 @@
 ﻿using MainServer.Interfaces;
-using MainServer.Services.Main;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SharedLib.Contracts.Request.Video;
 using SharedLib.Contracts.Response.Video;
-using SharedLib.Interfaces;
 using System.Security.Claims;
 
 namespace MainServer.Controllers
@@ -14,196 +12,121 @@ namespace MainServer.Controllers
     public class VideoController : ControllerBase
     {
         private readonly IVideoService _videoService;
-        private readonly ILogger<VideoController> _logger;
         private readonly IStorageService _storageService;
 
-        private readonly string GarageEndpoint;
-        private readonly string _bucketName;
-
-        public VideoController(IVideoService videoService, 
-            ILogger<VideoController> logger, ITokenService tokenService, IConfiguration configuration,
-            IStorageService storageService)
+        public VideoController(IVideoService videoService, IStorageService storageService)
         {
             _videoService = videoService;
-            _logger = logger;
             _storageService = storageService;
-            GarageEndpoint = configuration["Garage:Endpoint"] ?? "";
-            _bucketName = configuration["Garage:BucketName"] ?? "";
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAllVideo()
         {
-            try
-            {
-                List<VideoListItemResponse> videos = await _videoService.GetAllVideoAsync();
-                return Ok(videos);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogError(ex, "Непредвиденная ошибка контроллера при отправке всех видео");
-                return StatusCode(ApiException.GetStatusCode(ex.ErrorType), new { message = ex.Message });
-            }
-        }//Метод отпправки всех видео клиенту
+            List<VideoListItemResponse> videos = await _videoService.GetAllVideoAsync();
+            return Ok(videos);
+        }
 
         [HttpGet("search")]
         public async Task<IActionResult> SearchVideo([FromQuery] string query)
         {
-            try
-            {
-                List<VideoListItemResponse> videos = await _videoService.VideoSearchAsync(query);
-                return Ok(videos);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogError(ex, "Непредвиденная ошибка контроллера при отправке результата поиска");
-                return StatusCode(ApiException.GetStatusCode(ex.ErrorType), new { message = ex.Message });
-            }
-        }//Отправляет список из 10 видео по запросу
+            List<VideoListItemResponse> videos = await _videoService.VideoSearchAsync(query);
+            return Ok(videos);
+        }
 
         [HttpGet("{id}")]
         [Authorize]
         public async Task<IActionResult> GetVideo(int id)
         {
-            try
-            {
-                var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(nameIdentifier))
-                    return Unauthorized(new { message = "Не удалось определить идентификатор пользователя." });
-                int userId = int.Parse(nameIdentifier);
-                VideoDetailsResponse video = await _videoService.GetVideoAsync(id, userId);
-                return Ok(video);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogError(ex, "Непредвиденная ошибка контроллера при отправке видео");
-                return StatusCode(ApiException.GetStatusCode(ex.ErrorType), new { message = ex.Message });
-            }
-        }//Отправляет данные видео
+            var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(nameIdentifier))
+                return Unauthorized(new { message = "Не удалось определить идентификатор пользователя." });
+
+            int userId = int.Parse(nameIdentifier);
+            VideoDetailsResponse video = await _videoService.GetVideoAsync(id, userId);
+            return Ok(video);
+        }
 
         [HttpPost("{id}/reaction")]
         [Authorize]
-        public async Task<IActionResult> Reaction(int id, [FromBody] ReactionDto reaction )
+        public async Task<IActionResult> Reaction(int id, [FromBody] ReactionDto reaction)
         {
-            try
+            var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(nameIdentifier))
+                return Unauthorized(new { message = "Не удалось определить идентификатор пользователя." });
+
+            int userId = int.Parse(nameIdentifier);
+            ReactionRequest request = new ReactionRequest
             {
-                int videoId = id;
-                var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(nameIdentifier)) 
-                    return Unauthorized(new { message = "Не удалось определить идентификатор пользователя." });
-                int userId = int.Parse(nameIdentifier);
-                ReactionRequest request = new ReactionRequest { UserId = userId, IsLike = reaction.IsLike, VideoId = videoId };
-                await _videoService.ReactionAsync(request);
-                return Ok();
-            }
-            catch(ApiException ex)
-            {
-                _logger.LogError(ex, "Непредвиденная ошибка контроллера при получении реакции");
-                return StatusCode(ApiException.GetStatusCode(ex.ErrorType), new { message = ex.Message });
-            }
-        }//Обрабатывет реакцию пользователя
+                UserId = userId,
+                IsLike = reaction.IsLike,
+                VideoId = id
+            };
+
+            await _videoService.ReactionAsync(request);
+            return Ok();
+        }
 
         [HttpGet("{id}/comments")]
         public async Task<IActionResult> GetVideoComment(int id)
         {
-            try
-            {
-                List<CommentResponse> comments = await _videoService.GetCommentsAsync(id);
-                return Ok(comments);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogError(ex, "Непредвиденная ошибка контроллера при получении комменатриев");
-                return StatusCode(ApiException.GetStatusCode(ex.ErrorType), new { message = ex.Message });
-            }
-        }//Отправляет список комментариев к видео
+            List<CommentResponse> comments = await _videoService.GetCommentsAsync(id);
+            return Ok(comments);
+        }
 
         [HttpPost("{id}/comments")]
         [Authorize]
-        public async Task<IActionResult> NewComment([FromBody]  CommentCreateRequest comment, int id)
+        public async Task<IActionResult> NewComment([FromBody] CommentCreateRequest comment, int id)
         {
-            try
-            {
-                var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(nameIdentifier))
-                    return Unauthorized(new { message = "Не удалось определить идентификатор пользователя." });
-                int userId = int.Parse(nameIdentifier);
-                CommentCreateDto request = new()
-                {
-                    UserId = userId,
-                    Text = comment.Text,
-                    VideoId = id
-                };
+            var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(nameIdentifier))
+                return Unauthorized(new { message = "Не удалось определить идентификатор пользователя." });
 
-                await _videoService.NewCommentAsync(request);
-                return Ok(request);
-            }
-            catch (ApiException ex)
+            int userId = int.Parse(nameIdentifier);
+            CommentCreateDto request = new()
             {
-                _logger.LogError(ex, "Непредвиденная ошибка контроллера при создании комментария");
-                return StatusCode(ApiException.GetStatusCode(ex.ErrorType), new { message = ex.Message });
-            }
-        }//Создает новый комментарий
+                UserId = userId,
+                Text = comment.Text,
+                VideoId = id
+            };
+
+            await _videoService.NewCommentAsync(request);
+            return Ok(request);
+        }
 
         [HttpGet("{id}/stream")]
         public async Task<IActionResult> StreamVideo(int id)
         {
-            try
-            {
-                var video = await _videoService.GetVideoMetadataAsync(id);
-                if (video == null)
-                    return NotFound("Видео не найдено");
-
-                var response = await _storageService.GetObjectAsync(_bucketName, video.Link);
-                return new FileStreamResult(response.ResponseStream, response.Headers.ContentType ?? "video/mp4")
-                {EnableRangeProcessing = true};
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Ошибка при стриминге видео");
-                return StatusCode(500, new { message = "Внутренняя ошибка сервера" });
-            }
+            var video = await _videoService.GetVideoMetadataAsync(id);
+            var url = await _storageService.GeneratePresignedUrlAsync(video.Link, expiryHours: 1);
+            return Redirect(url);
         }
-
 
         [HttpPost("upload")]
         [Authorize]
         public async Task<IActionResult> UploadVideo([FromForm] VideoUploadRequest request)
         {
-            try
-            {
-                var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(nameIdentifier))
-                    return Unauthorized(new { message = "Не удалось определить идентификатор пользователя." });
-                int userId = int.Parse(nameIdentifier); int newVideoId = await _videoService.NewVideoAsync(request, userId);
-                VideoDetailsResponse video = await _videoService.GetVideoAsync(newVideoId, userId);
-                return Ok(video);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogError(ex, "Непредвиденная ошибка контроллера при создании видео");
-                return StatusCode(ApiException.GetStatusCode(ex.ErrorType), new { message = ex.Message });
-            }
+            var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(nameIdentifier))
+                return Unauthorized(new { message = "Не удалось определить идентификатор пользователя." });
+
+            int userId = int.Parse(nameIdentifier);
+            int newVideoId = await _videoService.NewVideoAsync(request, userId);
+            VideoDetailsResponse video = await _videoService.GetVideoAsync(newVideoId, userId);
+            return Ok(video);
         }
 
         [HttpGet("upload")]
         [Authorize]
         public async Task<IActionResult> GetUserVideos()
         {
-            try
-            {
-                var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                if (string.IsNullOrEmpty(nameIdentifier))
-                    return Unauthorized(new { message = "Не удалось определить идентификатор пользователя." });
-                int userId = int.Parse(nameIdentifier);
-                List<UserVideoListItemDto> videos = await _videoService.GetThisUserVideos(userId);
-                return Ok(videos);
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogError(ex, "Непредвиденная ошибка контроллера при получении видео");
-                return StatusCode(ApiException.GetStatusCode(ex.ErrorType), new { message = ex.Message });
-            }
+            var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(nameIdentifier))
+                return Unauthorized(new { message = "Не удалось определить идентификатор пользователя." });
+
+            int userId = int.Parse(nameIdentifier);
+            List<UserVideoListItemDto> videos = await _videoService.GetThisUserVideos(userId);
+            return Ok(videos);
         }
     }
 }

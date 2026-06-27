@@ -4,41 +4,75 @@ namespace MainServer.Services.ForController
 {
     public class PosterService
     {
-        string outputDirectory;
-        public PosterService(IConfiguration configuration)
+        private readonly string _outputDirectory;
+        private readonly string _placeholderPath;
+        private readonly ILogger<PosterService> _logger;
+
+        public PosterService(IConfiguration configuration, ILogger<PosterService> logger)
         {
-            outputDirectory = configuration["VideoStorage:TempPath"] ?? "/MainServer/temp_videos";
+            _outputDirectory = configuration["VideoStorage:TempPath"] ?? "/MainServer/temp_videos";
+            _placeholderPath = Path.Combine(AppContext.BaseDirectory, "Resources", "placeholder.png");
+            _logger = logger;
+
+            Directory.CreateDirectory(_outputDirectory);
         }
 
         public async Task<string> ExtractPoster(string videoPath)
         {
+            if (!File.Exists(videoPath))
+            {
+                _logger.LogWarning("Видеофайл не найден: {VideoPath}", videoPath);
+                throw new FileNotFoundException($"Видеофайл не найден: {videoPath}");
+            }
+
+            var fileName = Path.Combine(_outputDirectory, $"poster_{Guid.NewGuid()}.jpg");
+
             try
             {
-                if (!File.Exists(videoPath))
-                    throw new FileNotFoundException();
-
-                var fileName = $"{outputDirectory}/poster_{DateTime.Now.Ticks}.jpg";
-
-                var videoinfo = FFmpeg.GetMediaInfo(videoPath);
+                var mediaInfo = await FFmpeg.GetMediaInfo(videoPath);
+                if (mediaInfo.Duration.TotalSeconds < 5)
+                {
+                    _logger.LogWarning("Видео слишком короткое для извлечения постера: {Duration}с",
+                        mediaInfo.Duration.TotalSeconds);
+                }
 
                 var conversion = await FFmpeg.Conversions.FromSnippet.Snapshot(
                     videoPath,
                     fileName,
-                    TimeSpan.FromSeconds(5)
+                    TimeSpan.FromSeconds(Math.Min(5, mediaInfo.Duration.TotalSeconds / 2))
                 );
-                var rezult = await conversion.Start();
+
+                await conversion.Start();
+
+                if (!File.Exists(fileName))
+                    throw new InvalidOperationException("Не удалось создать постер: файл не был создан");
 
                 return fileName;
             }
             catch (Exception ex)
             {
-                var placeholderSource = Path.Combine(AppContext.BaseDirectory, "Resources", "placeholder.png");
-                var placeholderDest = Path.Combine(AppContext.BaseDirectory, "Resources", "placeholder1.png");
-                Console.WriteLine($"Ошибка при создании постера, был использован постер по умолчанию. Текст ошибки: {ex.Message}");
-                File.Copy(placeholderSource, placeholderDest, overwrite: true);
-                return placeholderDest;
-            }
+                _logger.LogError(ex, "Ошибка при создании постера для {VideoPath}", videoPath);
+                if (File.Exists(fileName))
+                {
+                    try
+                    {
+                        File.Delete(fileName);
+                    }
+                    catch (Exception deleteEx)
+                    {
+                        _logger.LogWarning(deleteEx, "Не удалось удалить повреждённый постер {FileName}", fileName);
+                    }
+                }
 
+                if (!File.Exists(_placeholderPath))
+                {
+                    _logger.LogError("Placeholder-изображение не найдено: {Path}", _placeholderPath);
+                    throw new InvalidOperationException("Placeholder-изображение отсутствует", ex);
+                }
+
+                _logger.LogInformation("Использован placeholder-постер из-за ошибки создания");
+                return _placeholderPath;
+            }
         }
     }
 }

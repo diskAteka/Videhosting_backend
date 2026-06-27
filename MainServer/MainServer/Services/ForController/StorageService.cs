@@ -29,20 +29,15 @@ public class StorageService : IStorageService
         Directory.CreateDirectory(_tempPath);
     }
 
-    public async Task<Video> UploadToStorageAsync(VideoUploadRequest request, int authorId, string tempFilePath)
+    public async Task<StorageUploadResult> UploadToStorageAsync(VideoUploadRequest request, int authorId, string tempFilePath)
     {
         if (!File.Exists(tempFilePath))
             throw new FileNotFoundException($"Видео не найдено: {tempFilePath}");
-
-        // Видео
         var videoExt = Path.GetExtension(tempFilePath);
         var videoKey = _paths.BuildVideoKey(videoExt);
         await _s3.UploadFileAsync(tempFilePath, videoKey, GetMime(videoExt));
-
-        // Постер
         var posterPath = await _posterService.ExtractPoster(tempFilePath);
         string posterKey = null!;
-
         try
         {
             var posterExt = Path.GetExtension(posterPath);
@@ -52,21 +47,24 @@ public class StorageService : IStorageService
         finally
         {
             if (File.Exists(posterPath))
-                File.Delete(posterPath);
+            {
+                try
+                {
+                    File.Delete(posterPath);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex,
+                        "Не удалось удалить временный постер: {PosterPath}",
+                        posterPath);
+                }
+            }
         }
 
-        return new Video
+        return new StorageUploadResult
         {
-            Name = request.Title,
-            Description = request.Description,
-            DateUpload = DateTime.UtcNow,
-            Link = videoKey,
-            Poster = posterKey,
-            Likes = 0,
-            Dislikes = 0,
-            Views = 0,
-            IsVerified = false,
-            AuthorId = authorId
+            VideoKey = videoKey,
+            PosterKey = posterKey
         };
     }
 

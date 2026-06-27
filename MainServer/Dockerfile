@@ -16,7 +16,7 @@ WORKDIR /app
 COPY --from=build /app/publish .
 
 RUN mkdir -p /MainServer/temp_videos
-RUN apk add ffmpeg
+RUN apt-get update && apt-get install -y ffmpeg && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 8080
 

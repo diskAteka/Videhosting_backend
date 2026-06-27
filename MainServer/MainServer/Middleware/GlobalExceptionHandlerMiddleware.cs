@@ -15,18 +15,32 @@ public static class GlobalExceptionHandlerMiddleware
             {
                 var feature = context.Features.Get<IExceptionHandlerFeature>();
                 var exception = feature?.Error;
-
                 var (statusCode, errorType, message) = MapException(exception);
-
                 context.Response.StatusCode = statusCode;
                 context.Response.ContentType = "application/json";
+                var env = context.RequestServices.GetService<IWebHostEnvironment>();
 
-                await context.Response.WriteAsJsonAsync(new
+                if (env?.IsDevelopment() == true && statusCode == 500)
                 {
-                    ErrorType = errorType,
-                    Message = message,
-                    Timestamp = DateTime.UtcNow
-                });
+                    await context.Response.WriteAsJsonAsync(new
+                    {
+                        ErrorType = errorType,
+                        Message = message,
+                        Timestamp = DateTime.UtcNow,
+                        TraceId = context.TraceIdentifier,
+                        Exception = exception?.ToString()
+                    });
+                }
+                else
+                {
+                    await context.Response.WriteAsJsonAsync(new
+                    {
+                        ErrorType = errorType,
+                        Message = message,
+                        Timestamp = DateTime.UtcNow,
+                        TraceId = context.TraceIdentifier
+                    });
+                }
             });
         });
     }
@@ -40,6 +54,13 @@ public static class GlobalExceptionHandlerMiddleware
                 apiException.ErrorType.ToString(),
                 apiException.Message
             );
+        }
+
+        if (exception != null)
+        {
+            var logger = LoggerFactory.Create(builder => builder.AddConsole())
+                .CreateLogger("GlobalExceptionHandler");
+            logger.LogError(exception, "Unhandled exception");
         }
 
         return (

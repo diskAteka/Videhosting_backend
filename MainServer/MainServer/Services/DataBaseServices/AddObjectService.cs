@@ -15,19 +15,11 @@ namespace MainServer.Services.DataBaseServices
 
         public async Task<AddRezult> AddAsync<T>(T table) where T : class, IAddble
         {
-            try
-            {
-                var dbSet = _context.Set<T>();
-                await dbSet.AddAsync(table);
-                var affectedTables = AffectedTableNames();
-                int affectedRows = await _context.SaveChangesAsync();
-                return new AddRezult(affectedTables, affectedRows > 0);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Ошибка при добавлении объекта: {ex.Message}");
-                return new AddRezult(null, false);
-            }
+            var dbSet = _context.Set<T>();
+            await dbSet.AddAsync(table);
+            var affectedTables = AffectedTableNames();
+            int affectedRows = await _context.SaveChangesAsync();
+            return new AddRezult(affectedTables, affectedRows > 0);
         }
 
         private List<string?> AffectedTableNames()

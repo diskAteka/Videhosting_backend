@@ -80,24 +80,8 @@ namespace MainServer.Controllers
         [Route("delete/comment/{id}")]
         public async Task<IActionResult> DeleteComment([FromRoute] int id)
         {
-            try
-            {
-                var response = await _deleteObjectService.DeleteAsync<Comment>(id);
-                if (response.Success)
-                    return Ok(response);
-                else
-                    return StatusCode(500, response);
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при удалении комментария с id {Id}", id);
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            var response = await _deleteObjectService.DeleteAsync<Comment>(id);
+            return Ok(response);
         }
 
         [Route("delete/like/{id}")]
@@ -105,25 +89,8 @@ namespace MainServer.Controllers
         [RequireRole(UserRole.Admin)]
         public async Task<IActionResult> DeleteLike([FromRoute] int id)
         {
-            try
-            {
-                var response = await _deleteObjectService.DeleteAsync<Like>(id);
-                if (response.Success)
-                    return Ok(response);
-                else
-                    return StatusCode(500, response);
-
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при удалении лайка с id {Id}", id);
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            var response = await _deleteObjectService.DeleteAsync<Like>(id);
+            return Ok(response);
         }
 
         [Route("delete/view/{id}")]
@@ -131,24 +98,8 @@ namespace MainServer.Controllers
         [RequireRole(UserRole.Admin)]
         public async Task<IActionResult> DeleteView([FromRoute] int id)
         {
-            try
-            {
-                var response = await _deleteObjectService.DeleteAsync<View>(id);
-                if (response.Success)
-                    return Ok(response);
-                else
-                    return StatusCode(500, response);
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при удалении просмотра с id {Id}", id);
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            var response = await _deleteObjectService.DeleteAsync<View>(id);
+            return Ok(response);
         }
 
         [Route("delete/dislike/{id}")]
@@ -156,24 +107,8 @@ namespace MainServer.Controllers
         [RequireRole(UserRole.Admin)]
         public async Task<IActionResult> DeleteDislike([FromRoute] int id)
         {
-            try
-            {
-                var response = await _deleteObjectService.DeleteAsync<DisLike>(id);
-                if (response.Success)
-                    return Ok(response);
-                else
-                    return StatusCode(500, response);
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при удалении дизлайка с id {Id}", id);
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            var response = await _deleteObjectService.DeleteAsync<DisLike>(id);
+            return Ok(response);
         }
 
         [Route("delete/user/{id}")]
@@ -181,24 +116,8 @@ namespace MainServer.Controllers
         [RequireRole(UserRole.Admin)]
         public async Task<IActionResult> DeleteUser([FromRoute] int id)
         {
-            try
-            {
-                var response = await _deleteObjectService.DeleteAsync<User>(id);
-                if (response.Success)
-                    return Ok(response);
-                else
-                    return StatusCode(500, response);
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при удалении пользователя с id {Id}", id);
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            var response = await _deleteObjectService.DeleteAsync<User>(id);
+            return Ok(response);
         }
 
         [Route("delete/video/{id}")]
@@ -206,24 +125,8 @@ namespace MainServer.Controllers
         [RequireRole(UserRole.Admin)]
         public async Task<IActionResult> DeleteVideo([FromRoute] int id)
         {
-            try
-            {
-                var response = await _videoService.DeleteVideoAsync(id);
-                if (response.Success)
-                    return Ok(response);
-                else
-                    return StatusCode(500, response);
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при удалении видео с id {Id}", id);
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            var response = await _videoService.DeleteVideoAsync(id);
+            return Ok(response);
         }
 
         [Route("delete/employee/{id}")]
@@ -231,27 +134,11 @@ namespace MainServer.Controllers
         [RequireRole(UserRole.Admin)]
         public async Task<IActionResult> DeleteEmployee([FromRoute] int id)
         {
-            try
-            {
-                var employee = await _getObjectService.GetObjectAsync<Employee>(id) as Employee;
-                if (employee == null)
-                    return NotFound(new { Message = $"Сотрудник с id {id} не найден" });
-                var response = await _deleteObjectService.DeleteAsync<Employee>(id);
-                if (response.Success)
-                    return Ok(response);
-                else
-                    return StatusCode(500, response);
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при удалении сотрудника с id {Id}", id);
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            var employee = await _getObjectService.GetObjectAsync<Employee>(id) as Employee;
+            if (employee == null)
+                return NotFound(new { Message = $"Сотрудник с id {id} не найден" });
+            var response = await _deleteObjectService.DeleteAsync<Employee>(id);
+            return Ok(response);
         }
         #endregion
 
@@ -261,25 +148,10 @@ namespace MainServer.Controllers
         [RequireRole(UserRole.Admin)]
         public async Task<IActionResult> UpdateVideo([FromRoute] int id, [FromBody] PostVideoRequest video)
         {
-            try
-            {
-                var request = _mapper.Map<Video>(video);
-                var response = await _updateObjectService.UpdateAsync(request);
-                if (response.Success)
-                    return Ok(response);
-                else
-                    return StatusCode(500, response);
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при обновлении видео с id {Id}", id);
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            var request = _mapper.Map<Video>(video);
+            request.Id = id;
+            var response = await _updateObjectService.UpdateAsync(request);
+            return Ok(response);
         }
 
         [Route("update/user/{id}")]
@@ -287,27 +159,8 @@ namespace MainServer.Controllers
         [RequireRole(UserRole.Admin)]
         public async Task<IActionResult> UpdateUser([FromRoute] int id, [FromBody] PutUserRequest request)
         {
-            try
-            {
-                var response = await _authService.ForcedUserUpdateAsync(id, request);
-                if (response.Success)
-                    return Ok(response);
-                else
-                {
-                    response.Message = response.Message ?? "Неожиданная ошибка при обновлении пользователя";
-                    return StatusCode(500, response);
-                }                   
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при обновлении пользователя с id {Id}", id);
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            var response = await _authService.ForcedUserUpdateAsync(id, request);
+            return Ok(response);                 
         }
 
 
@@ -316,27 +169,10 @@ namespace MainServer.Controllers
         [HttpPut]
         public async Task<IActionResult> UpdateComment([FromRoute] int id, [FromBody] PostPutCommentRequest comment)
         {
-            try
-            {
-                if (Request.Headers["X-Admin-Key"] != _configuration["X-Admin-Key"])
-                    return Forbid();
-                var request = _mapper.Map<Comment>(comment);
-                var response = await _updateObjectService.UpdateAsync(request);
-                if (response.Success)
-                    return Ok(response);
-                else
-                    return StatusCode(500, response);
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при обновлении комментария с id {Id}", id);
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            var request = _mapper.Map<Comment>(comment);
+            request.Id = id;
+            var response = await _updateObjectService.UpdateAsync(request);
+            return Ok(response);
         }
 
         [Route("reset/password/{id}")]
@@ -344,27 +180,8 @@ namespace MainServer.Controllers
         [HttpPut]
         public async Task<IActionResult> ForcedResetPassword([FromRoute] int id, [FromBody] ForcedPasswordResetRequest request)
         {
-            try
-            {
-                var response = await _authService.ForcedPasswordResetAsync(id, request);
-                if (response.Success)
-                    return Ok(response);
-                else
-                {
-                    response.Message = response.Message ?? "Неожиданная ошибка при принудительной смене пароля";
-                    return StatusCode(500, response);
-                }                   
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при принудительной смене пароля для пользователя с id {Id}", id);
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            var response = await _authService.ForcedPasswordResetAsync(id, request);
+            return Ok(response);
         }
 
         #endregion
@@ -376,25 +193,9 @@ namespace MainServer.Controllers
         [RequireRole(UserRole.Admin)]
         public async Task<IActionResult> AddEmployee([FromBody] PostPutEmployeeRequest employee)
         {
-            try
-            {
-                var request = _mapper.Map<Employee>(employee);
-                var response = await _addObjectService.AddAsync(request);
-                if (response.Success)
-                    return Ok(response);
-                else
-                    return StatusCode(500, response);
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при добавлении сотрудника");
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            var request = _mapper.Map<Employee>(employee);
+            var response = await _addObjectService.AddAsync(request);
+            return Ok(response);
         }
 
         [Route("add/video")]
@@ -402,25 +203,9 @@ namespace MainServer.Controllers
         [RequireRole(UserRole.Admin)]
         public async Task<IActionResult> AddVideo([FromBody] PostVideoRequest video)
         {
-            try
-            {
-                var request = _mapper.Map<Video>(video);
-                var response = await _addObjectService.AddAsync(request);
-                if (response.Success)
-                    return Ok(response);
-                else
-                    return StatusCode(500, response);
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при добавлении видео");
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            var request = _mapper.Map<Video>(video);
+            var response = await _addObjectService.AddAsync(request);
+            return Ok(response);
         }
 
         [Route("add/comment")]
@@ -428,25 +213,9 @@ namespace MainServer.Controllers
         [RequireRole(UserRole.Admin)]
         public async Task<IActionResult> AddComment([FromBody] PostPutCommentRequest comment)
         {
-            try
-            {
-                var request = _mapper.Map<Comment>(comment);
-                var response = await _addObjectService.AddAsync(request);
-                if (response.Success)
-                    return Ok(response);
-                else
-                    return StatusCode(500, response);
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при добавлении комментария");
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            var request = _mapper.Map<Comment>(comment);
+            var response = await _addObjectService.AddAsync(request);
+            return Ok(response);
         }
 
         [Route("add/like")]
@@ -454,25 +223,9 @@ namespace MainServer.Controllers
         [RequireRole(UserRole.Admin)]
         public async Task<IActionResult> AddLike([FromBody] PostLikeRequest like)
         {
-            try
-            {
-                var request = _mapper.Map<Like>(like);
-                var response = await _addObjectService.AddAsync(request);
-                if (response.Success)
-                    return Ok(response);
-                else
-                    return StatusCode(500, response);
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при добавлении лайка");
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            var request = _mapper.Map<Like>(like);
+            var response = await _addObjectService.AddAsync(request);
+            return Ok(response);
         }
 
         [Route("add/dislike")]
@@ -480,25 +233,9 @@ namespace MainServer.Controllers
         [RequireRole(UserRole.Admin)]
         public async Task<IActionResult> AddDislike([FromBody] PostDislikeRequest dislike)
         {
-            try
-            {
-                var request = _mapper.Map<DisLike>(dislike);
-                var response = await _addObjectService.AddAsync(request);
-                if (response.Success)
-                    return Ok(response);
-                else
-                    return StatusCode(500, response);
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при добавлении дизлайка");
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            var request = _mapper.Map<DisLike>(dislike);
+            var response = await _addObjectService.AddAsync(request);
+            return Ok(response);
         }
 
         [Route("add/view")]
@@ -506,25 +243,9 @@ namespace MainServer.Controllers
         [RequireRole(UserRole.Admin)]
         public async Task<IActionResult> AddView([FromBody] PostViewRequest view)
         {
-            try
-            {
-                var request = _mapper.Map<View>(view);
-                var response = await _addObjectService.AddAsync(request);
-                if (response.Success)
-                    return Ok(response);
-                else
-                    return StatusCode(500, response);
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при добавлении просмотра");
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            var request = _mapper.Map<View>(view);
+            var response = await _addObjectService.AddAsync(request);
+            return Ok(response);
         }
 
         [Route("add/user")]
@@ -532,28 +253,8 @@ namespace MainServer.Controllers
         [RequireRole(UserRole.Admin)]
         public async Task<IActionResult> AddUser([FromBody] PostUserRequest request)
         {
-            try
-            {
-                var response = await _authService.ForcedUserAddAsync(request);
-                if (response.Success)
-                    return Ok(response);
-                else
-                {
-                    response.Message = response.Message ?? "Неожиданная ошибка при добавлении пользователя";
-                    return StatusCode(500, response);
-                }
-                    
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при добавлении комментария");
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            var response = await _authService.ForcedUserAddAsync(request);
+            return Ok(response);
         }
 
         #endregion
@@ -565,24 +266,8 @@ namespace MainServer.Controllers
         [RequireRole(UserRole.Admin)]
         public async Task<IActionResult> GetEmloyee([FromQuery] QueryParameters parameters)
         {
-            try
-            {
-                var employee = await _getObjectService.GetObjectsAsync<Employee>(parameters);
-                if (employee != null)
-                    return Ok(employee);
-                else
-                    return StatusCode(500, new { Message = $"Не найдено не одного сотрудника" });
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при получении сотрудников ");
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            var employee = await _getObjectService.GetObjectsAsync<Employee>(parameters);
+            return Ok(employee);
         }
 
         [HttpGet]
@@ -590,28 +275,9 @@ namespace MainServer.Controllers
         [Route("get/videos")]
         public async Task<IActionResult> GetVideos([FromQuery] QueryParameters parameters)
         {
-            try
-            {
-                var videos = await _getObjectService.GetObjectsAsync<Video>(parameters);
-                if (videos != null)
-                { 
-                
-                    var response = _mapper.Map<List<GetVideoResponse>>(videos);
-                    return Ok(response);
-                }
-                else
-                    return StatusCode(500, new { Message = $"Не найдено не одного видео" });
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при получении видео ");
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            var videos = await _getObjectService.GetObjectsAsync<Video>(parameters);           
+            var response = _mapper.Map<List<GetVideoResponse>>(videos);
+            return Ok(response);
         }
 
         [HttpGet]
@@ -619,27 +285,9 @@ namespace MainServer.Controllers
         [Route("get/users")]
         public async Task<IActionResult> GetUsers([FromQuery] QueryParameters parameters)
         {
-            try
-            {
-                var users = await _getObjectService.GetObjectsAsync<User>(parameters);
-                if (users != null)
-                {
-                    var response = _mapper.Map<List<GetUserResponse>>(users);
-                    return Ok(response);
-                }
-                else
-                    return StatusCode(500, new { Message = $"Не найдено не одного пользователя" });
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при получении пользователей ");
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            var users = await _getObjectService.GetObjectsAsync<User>(parameters);
+            var response = _mapper.Map<List<GetUserResponse>>(users);
+            return Ok(response);
         }
 
 
@@ -648,27 +296,9 @@ namespace MainServer.Controllers
         [Route("get/comments")]
         public async Task<IActionResult> GetComments([FromQuery] QueryParameters parameters)
         {
-            try
-            {
-                var comments = await _getObjectService.GetObjectsAsync<Comment>(parameters);
-                if (comments != null)
-                {
-                    var response = _mapper.Map<List<GetCommentResponse>>(comments);
-                    return Ok(response);
-                }
-                else
-                    return StatusCode(500, new { Message = $"Не найдено не одного комментария" });
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при получении комментариев ");
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            var comments = await _getObjectService.GetObjectsAsync<Comment>(parameters);
+            var response = _mapper.Map<List<GetCommentResponse>>(comments);
+            return Ok(response);
         }
 
         [HttpGet]
@@ -676,55 +306,20 @@ namespace MainServer.Controllers
         [Route("get/likes")]
         public async Task<IActionResult> GetLikes([FromQuery] QueryParameters parameters)
         {
-            try
-            {
-                var likes = await _getObjectService.GetObjectsAsync<Like>(parameters);
-                if (likes != null)
-                {
-                    var response = _mapper.Map<List<GetLikeResponse>>(likes);
-                    return Ok(response);
-                }
-                else
-                    return StatusCode(500, new { Message = $"Не найдено не одного лайка" });
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при получении лайков ");
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            var likes = await _getObjectService.GetObjectsAsync<Like>(parameters);
+            var response = _mapper.Map<List<GetLikeResponse>>(likes);
+            return Ok(response);
         }
+
 
         [HttpGet]
         [Authorize]
         [Route("get/dislikes")]
         public async Task<IActionResult> GetDislikes([FromQuery] QueryParameters parameters)
         {
-            try
-            {
-                var dislikes = await _getObjectService.GetObjectsAsync<DisLike>(parameters);
-                if (dislikes != null)
-                {
-                    var response = _mapper.Map<List<GetDislikeResponse>>(dislikes);
-                    return Ok(response);
-                }
-                else
-                    return StatusCode(500, new { Message = $"Не найдено не одного дизлайка" });
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при получении дизлайков ");
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            var dislikes = await _getObjectService.GetObjectsAsync<DisLike>(parameters);
+            var response = _mapper.Map<List<GetDislikeResponse>>(dislikes);
+            return Ok(response);
         }
 
         [HttpGet]
@@ -732,55 +327,20 @@ namespace MainServer.Controllers
         [Route("get/views")]
         public async Task<IActionResult> GetViews([FromQuery] QueryParameters parameters)
         {
-            try
-            {
-                var views = await _getObjectService.GetObjectsAsync<View>(parameters);
-                if (views != null)
-                {
-                    var response = _mapper.Map<List<GetViewResponse>>(views);
-                    return Ok(response);
-                }
-                else
-                    return StatusCode(500, new { Message = $"Не найдено не одного просмотра" });
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при получении просмотров ");
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            var views = await _getObjectService.GetObjectsAsync<View>(parameters);
+            var response = _mapper.Map<List<GetViewResponse>>(views);
+            return Ok(response);
         }
+
 
         [HttpGet]
         [Authorize]
         [Route("get/user/videos")]
         public async Task<IActionResult> GetUserVideos([FromQuery] int userId)
         {
-            try
-            {
-                var userVideos = await _videoService.GetThisUserVideos(userId);
-                if (userVideos != null)
-                {
-                    var mappedResponse = _mapper.Map<List<GetVideoResponse>>(userVideos);
-                    return Ok(mappedResponse);
-                }
-                else
-                    return StatusCode(500, new { Message = $"Не найдено не одного просмотра" });
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при получении просмотров ");
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            var userVideos = await _videoService.GetThisUserVideos(userId);
+            var mappedResponse = _mapper.Map<List<GetVideoResponse>>(userVideos);
+            return Ok(mappedResponse);
         }
 
 
@@ -793,26 +353,13 @@ namespace MainServer.Controllers
         [RequireRole(UserRole.Admin)]
         public async Task<IActionResult> GetCount([FromQuery] string type)
         {
-            try
-            {
-                if (string.IsNullOrEmpty(type))
-                    return BadRequest(new { Message = "Параметр type обязателен" });
-                if (!TableToClassMapper.TableToClassMap.ContainsKey(type))
-                    return BadRequest(new { Message = $"Неверный тип объекта: {type}" });
-                var objectType = TableToClassMapper.TableToClassMap[type];
-                int count = await _countDelegates[objectType]();
-                return Ok(new { Count = count });
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при получении количества объектов типа {Type}", type);
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            if (string.IsNullOrEmpty(type))
+                return BadRequest(new { Message = "Параметр type обязателен" });
+            if (!TableToClassMapper.TableToClassMap.ContainsKey(type))
+                return BadRequest(new { Message = $"Неверный тип объекта: {type}" });
+            var objectType = TableToClassMapper.TableToClassMap[type];
+            int count = await _countDelegates[objectType]();
+            return Ok(new { Count = count });
         }
 
         [HttpGet]
@@ -820,28 +367,15 @@ namespace MainServer.Controllers
         [RequireRole(UserRole.Virifier)]
         public async Task<IActionResult> GetCountForVirifier([FromQuery] string type)
         {
-            try
-            {
-                if (string.IsNullOrEmpty(type))
-                    return BadRequest(new { Message = "Параметр type обязателен" });
-                if (!TableToClassMapper.TableToClassMap.ContainsKey(type))
-                    return BadRequest(new { Message = $"Неверный тип объекта: {type}" });
-                var objectType = TableToClassMapper.TableToClassMap[type];
-                if (objectType == typeof(Employee) || objectType == typeof(ServerLog))
-                    return Forbid();
-                int count = await _countDelegates[objectType]();
-                return Ok(new { Count = count });
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    return StatusCode(ApiException.GetStatusCode(apiEx.ErrorType), new { Message = apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при получении количества объектов типа {Type}", type);
-                return StatusCode(500, new { Message = "Неожиданная ошибка сервера" });
-            }
+            if (string.IsNullOrEmpty(type))
+                return BadRequest(new { Message = "Параметр type обязателен" });
+            if (!TableToClassMapper.TableToClassMap.ContainsKey(type))
+                return BadRequest(new { Message = $"Неверный тип объекта: {type}" });
+            var objectType = TableToClassMapper.TableToClassMap[type];
+            if (objectType == typeof(Employee) || objectType == typeof(ServerLog))
+                return Forbid();
+            int count = await _countDelegates[objectType]();
+            return Ok(new { Count = count });
         }
         #endregion
 
@@ -852,22 +386,9 @@ namespace MainServer.Controllers
         [Authorize]
         public async Task<IActionResult> GetComment([FromRoute] int id)
         {
-            try
-            {
-                var comment = await _getObjectService.GetObjectAsync<Comment>(id);
-                var response = _mapper.Map<GetCommentResponse>(comment);
-                return Ok(response);
-            }
-            catch(Exception ex)
-            {
-                if(ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    int code = ApiException.GetStatusCode(apiEx.ErrorType);
-                    return StatusCode(code, new { Message = apiEx.Message });
-                }
-                return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
-            }
+            var comment = await _getObjectService.GetObjectAsync<Comment>(id);
+            var response = _mapper.Map<GetCommentResponse>(comment);
+            return Ok(response);
         }
 
         [HttpGet]
@@ -875,22 +396,9 @@ namespace MainServer.Controllers
         [Authorize]
         public async Task<IActionResult> GetUser([FromRoute] int id)
         {
-            try
-            {
-                var user = await _getObjectService.GetObjectAsync<User>(id);
-                var response = _mapper.Map<GetUserResponse>(user);  
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    int code = ApiException.GetStatusCode(apiEx.ErrorType);
-                    return StatusCode(code, new { Message = apiEx.Message });
-                }
-                return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
-            }
+            var user = await _getObjectService.GetObjectAsync<User>(id);
+            var response = _mapper.Map<GetUserResponse>(user);  
+            return Ok(response);
         }
 
 
@@ -900,22 +408,9 @@ namespace MainServer.Controllers
         [Authorize]
         public async Task<IActionResult> GetVideo([FromRoute] int id)
         {
-            try
-            {
-                var video = await _getObjectService.GetObjectAsync<Video>(id);
-                var response = _mapper.Map<GetVideoResponse>(video);    
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    int code = ApiException.GetStatusCode(apiEx.ErrorType);
-                    return StatusCode(code, new { Message = apiEx.Message });
-                }
-                return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
-            }
+            var video = await _getObjectService.GetObjectAsync<Video>(id);
+            var response = _mapper.Map<GetVideoResponse>(video);    
+            return Ok(response);
         }
 
 
@@ -924,22 +419,9 @@ namespace MainServer.Controllers
         [RequireRole(UserRole.Admin)]
         public async Task<IActionResult> GetServerLog([FromRoute] int id)
         {
-            try
-            {
-                var serverLog = await _getObjectService.GetObjectAsync<ServerLog>(id);
-                var response = _mapper.Map<GetServerLogResponse>(serverLog);
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    int code = ApiException.GetStatusCode(apiEx.ErrorType);
-                    return StatusCode(code, new { Message = apiEx.Message });
-                }
-                return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
-            }
+            var serverLog = await _getObjectService.GetObjectAsync<ServerLog>(id);
+            var response = _mapper.Map<GetServerLogResponse>(serverLog);
+            return Ok(response);
         }
 
 
@@ -948,21 +430,8 @@ namespace MainServer.Controllers
         [RequireRole(UserRole.Admin)]
         public async Task<IActionResult> GetEmployee([FromRoute] int id)
         {
-            try
-            {
-                var response = await _getObjectService.GetObjectAsync<Employee>(id);
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    int code = ApiException.GetStatusCode(apiEx.ErrorType);
-                    return StatusCode(code, new { Message = apiEx.Message });
-                }
-                return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
-            }
+            var response = await _getObjectService.GetObjectAsync<Employee>(id);
+            return Ok(response);
         }
 
         [HttpGet]
@@ -970,22 +439,9 @@ namespace MainServer.Controllers
         [Authorize]
         public async Task<IActionResult> GetView([FromRoute] int id)
         {
-            try
-            {
-                var view = await _getObjectService.GetObjectAsync<View>(id);
-                var response = _mapper.Map<GetViewResponse>(view);
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    int code = ApiException.GetStatusCode(apiEx.ErrorType);
-                    return StatusCode(code, new { Message = apiEx.Message });
-                }
-                return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
-            }
+            var view = await _getObjectService.GetObjectAsync<View>(id);
+            var response = _mapper.Map<GetViewResponse>(view);
+            return Ok(response);
         }
 
 
@@ -994,22 +450,9 @@ namespace MainServer.Controllers
         [Authorize]
         public async Task<IActionResult> GetLike([FromRoute] int id)
         {
-            try
-            {
-                var like = await _getObjectService.GetObjectAsync<Like>(id);
-                var response = _mapper.Map<GetLikeResponse>(like);
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    int code = ApiException.GetStatusCode(apiEx.ErrorType);
-                    return StatusCode(code, new { Message = apiEx.Message });
-                }
-                return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
-            }
+            var like = await _getObjectService.GetObjectAsync<Like>(id);
+            var response = _mapper.Map<GetLikeResponse>(like);
+            return Ok(response);
         }
 
 
@@ -1018,22 +461,9 @@ namespace MainServer.Controllers
         [Authorize]
         public async Task<IActionResult> GetDislike([FromRoute] int id)
         {
-            try
-            {
-                var dislike = await _getObjectService.GetObjectAsync<DisLike>(id);
-                var response = _mapper.Map<GetDislikeResponse>(dislike);
-                return Ok(response);
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    int code = ApiException.GetStatusCode(apiEx.ErrorType);
-                    return StatusCode(code, new { Message = apiEx.Message });
-                }
-                return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
-            }
+            var dislike = await _getObjectService.GetObjectAsync<DisLike>(id);
+            var response = _mapper.Map<GetDislikeResponse>(dislike);
+            return Ok(response);
         }
 
         #endregion
@@ -1045,26 +475,9 @@ namespace MainServer.Controllers
         [Route("stream/{id}")]
         public async Task<IActionResult> StreamVideo([FromRoute] int id)
         {
-            try
-            {
-                var video = await _videoService.GetVideoMetadataAsync(id);
-                if (video == null)
-                    return NotFound("Видео не найдено");
-
-                var response = await _storageService.GetObjectAsync(_bucketName, video.Link);
-                return new FileStreamResult(response.ResponseStream, response.Headers.ContentType ?? "video/mp4")
-                { EnableRangeProcessing = true };
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    int code = ApiException.GetStatusCode(apiEx.ErrorType);
-                    return StatusCode(code, new { Message = apiEx.Message });
-                }
-                return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
-            }
+            var video = await _videoService.GetVideoMetadataAsync(id);
+            var url = await _storageService.GeneratePresignedUrlAsync(video.Link, expiryHours: 1);
+            return Ok(url);
         }
 
         #endregion
@@ -1072,28 +485,13 @@ namespace MainServer.Controllers
         #region getPoster endpont
 
         [HttpGet]
-        [Route("video/poster/{id}")]
+        [Route("video/poster/{videoId}")]
         [RequireRole(UserRole.Virifier)]
         public async Task<IActionResult> GetPoster([FromRoute] int videoId)
         {
-            try
-            {
-                var video = await _videoService.GetVideoMetadataAsync(videoId);
-                if (video == null)
-                    return NotFound("Видео не найдено");
-                var response = await _storageService.GetObjectAsync(_bucketName, video.Poster);
-                return new FileStreamResult(response.ResponseStream, response.Headers.ContentType ?? "image/jpeg");
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    int code = ApiException.GetStatusCode(apiEx.ErrorType);
-                    return StatusCode(code, new { apiEx.Message });
-                }
-                return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
-            }
+            var video = await _videoService.GetVideoMetadataAsync(videoId);
+            var response = await _storageService.GetObjectAsync(_bucketName, video.Poster);
+            return new FileStreamResult(response.ResponseStream, response.Headers.ContentType ?? "image/jpeg");
         }
 
         #endregion
@@ -1105,28 +503,8 @@ namespace MainServer.Controllers
         [RequireRole(UserRole.Virifier)]
         public async Task<IActionResult> VerifyVideo([FromRoute] int id)
         {
-            try
-            {
-                var response = await _videoService.VerifyVideoAsync(id);
-                if (response.Success)
-                    return Ok(response);
-                else
-                {
-                    response.Message = response.Message ?? "Неожиданная ошибка при верификации видео";
-                    return StatusCode(500, response);
-                }
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    int code = ApiException.GetStatusCode(apiEx.ErrorType);
-                    return StatusCode(code, new { apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при верификации видео с id {Id}", id);
-                return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
-            }
+            var response = await _videoService.VerifyVideoAsync(id);
+            return Ok(response);
         }
 
         #endregion
@@ -1138,54 +516,20 @@ namespace MainServer.Controllers
         [Authorize]
         public async Task<IActionResult> LogAction([FromBody] ServerLog log)
         {
-            try
-            {
-                var response = await _addObjectService.AddAsync(log);
-                if (response.Success)
-                    return Ok(response);
-                else
-                {
-                    response.Message = response.Message ?? "Неожиданная ошибка при добавлении лога";
-                    return StatusCode(500, response);
-                }
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    int code = ApiException.GetStatusCode(apiEx.ErrorType);
-                    return StatusCode(code, new { apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при добавлении лога");
-                return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
-            }
+            var response = await _addObjectService.AddAsync(log);
+            return Ok(response);
         }
 
         #endregion
 
         #region employee login endpoint
 
-        [HttpGet]
+        [HttpPost]
         [Route("login")]
         public async Task<IActionResult> EmployeeLogin([FromBody] EmployeeLoginRequest request)
         {
-            try
-            {
-                string token = await _authService.EmployeeLoginAsync(request);
-                return Ok(new { Token = token });
-            }
-            catch (Exception ex)
-            {
-                if (ex is ApiException)
-                {
-                    var apiEx = (ApiException)ex;
-                    int code = ApiException.GetStatusCode(apiEx.ErrorType);
-                    return StatusCode(code, new { apiEx.Message });
-                }
-                _logger.LogError(ex, "Ошибка при авторизации сотрудника");
-                return StatusCode(500, new { Message = "Непредвиденная ошибка сервера" });
-            }
+            string token = await _authService.EmployeeLoginAsync(request);
+            return Ok(new { Token = token });
         }
 
         #endregion

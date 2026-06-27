@@ -63,6 +63,7 @@ builder.Services.AddScoped<IUpdateObjectService, UpdateObjectService>();
 builder.Services.AddScoped<IGetObjectService, GetObjectSevice>();
 builder.Services.AddScoped<IDeleteObjectService, DeleteObjectService>();
 builder.Services.AddScoped<PosterService>();
+builder.Services.AddHostedService<TempFileCleanupService>();
 
 var allowedOrigins = builder.Configuration.GetSection("CorsOrigins").Get<string[]>();
 builder.Services.AddCors(options =>

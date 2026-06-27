@@ -11,7 +11,6 @@ namespace MainServer.Services.Main
             ErrorType = type;
         }
 
-
         public static int GetStatusCode(ErrorType type)
         {
             switch (type)
