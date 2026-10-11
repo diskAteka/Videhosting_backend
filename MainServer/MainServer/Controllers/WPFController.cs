@@ -272,7 +272,7 @@ namespace MainServer.Controllers
         }
 
         [HttpGet]
-        [Authorize]
+        [RequireRole(UserRole.Admin)]
         [Route("get/videos")]
         public async Task<IActionResult> GetVideos([FromQuery] QueryParameters parameters)
         {
@@ -282,7 +282,7 @@ namespace MainServer.Controllers
         }
 
         [HttpGet]
-        [Authorize]
+        [RequireRole(UserRole.Admin)]
         [Route("get/users")]
         public async Task<IActionResult> GetUsers([FromQuery] QueryParameters parameters)
         {
@@ -293,7 +293,7 @@ namespace MainServer.Controllers
 
 
         [HttpGet]
-        [Authorize]
+        [RequireRole(UserRole.Admin)]
         [Route("get/comments")]
         public async Task<IActionResult> GetComments([FromQuery] QueryParameters parameters)
         {
@@ -303,7 +303,7 @@ namespace MainServer.Controllers
         }
 
         [HttpGet]
-        [Authorize]
+        [RequireRole(UserRole.Admin)]
         [Route("get/likes")]
         public async Task<IActionResult> GetLikes([FromQuery] QueryParameters parameters)
         {
@@ -314,7 +314,7 @@ namespace MainServer.Controllers
 
 
         [HttpGet]
-        [Authorize]
+        [RequireRole(UserRole.Admin)]
         [Route("get/dislikes")]
         public async Task<IActionResult> GetDislikes([FromQuery] QueryParameters parameters)
         {
@@ -324,7 +324,7 @@ namespace MainServer.Controllers
         }
 
         [HttpGet]
-        [Authorize]
+        [RequireRole(UserRole.Admin)]
         [Route("get/views")]
         public async Task<IActionResult> GetViews([FromQuery] QueryParameters parameters)
         {
@@ -335,7 +335,7 @@ namespace MainServer.Controllers
 
 
         [HttpGet]
-        [Authorize]
+        [RequireRole(UserRole.Admin)]
         [Route("get/user/videos")]
         public async Task<IActionResult> GetUserVideos([FromQuery] int userId)
         {
@@ -344,6 +344,20 @@ namespace MainServer.Controllers
             return Ok(mappedResponse);
         }
 
+
+        #endregion
+
+        #region virifier endpoints
+
+        [HttpGet]
+        [RequireRole(UserRole.Virifier)]
+        [Route("virifier/videos")]
+        public async Task<IActionResult> GetUnverifiedVideos([FromQuery] QueryParameters parameters)
+        {
+            var videos = await _videoService.GetUnverifiedVideosAsync(parameters);
+            var response = _mapper.Map<List<GetVideoResponse>>(videos);
+            return Ok(response);
+        }
 
         #endregion
 
@@ -384,7 +398,7 @@ namespace MainServer.Controllers
 
         [HttpGet]
         [Route("get/comment/{id}")]
-        [Authorize]
+        [RequireRole(UserRole.Admin)]
         public async Task<IActionResult> GetComment([FromRoute] int id)
         {
             var comment = await _getObjectService.GetObjectAsync<Comment>(id);
@@ -394,7 +408,7 @@ namespace MainServer.Controllers
 
         [HttpGet]
         [Route("get/user/{id}")]
-        [Authorize]
+        [RequireRole(UserRole.Admin)]
         public async Task<IActionResult> GetUser([FromRoute] int id)
         {
             var user = await _getObjectService.GetObjectAsync<User>(id);
@@ -406,7 +420,7 @@ namespace MainServer.Controllers
 
         [HttpGet]
         [Route("get/video/{id}")]
-        [Authorize]
+        [RequireRole(UserRole.Admin, UserRole.Virifier)]
         public async Task<IActionResult> GetVideo([FromRoute] int id)
         {
             var video = await _getObjectService.GetObjectAsync<Video>(id);
@@ -437,7 +451,7 @@ namespace MainServer.Controllers
 
         [HttpGet]
         [Route("get/view/{id}")]
-        [Authorize]
+        [RequireRole(UserRole.Admin)]
         public async Task<IActionResult> GetView([FromRoute] int id)
         {
             var view = await _getObjectService.GetObjectAsync<View>(id);
@@ -448,7 +462,7 @@ namespace MainServer.Controllers
 
         [HttpGet]
         [Route("get/like/{id}")]
-        [Authorize]
+        [RequireRole(UserRole.Admin)]
         public async Task<IActionResult> GetLike([FromRoute] int id)
         {
             var like = await _getObjectService.GetObjectAsync<Like>(id);
@@ -459,7 +473,7 @@ namespace MainServer.Controllers
 
         [HttpGet]
         [Route("get/dislike/{id}")]
-        [Authorize]
+        [RequireRole(UserRole.Admin)]
         public async Task<IActionResult> GetDislike([FromRoute] int id)
         {
             var dislike = await _getObjectService.GetObjectAsync<Dislike>(id);
@@ -472,7 +486,7 @@ namespace MainServer.Controllers
         #region stream endpoint
 
         [HttpGet]
-        [Authorize]
+        [RequireRole(UserRole.Admin, UserRole.Virifier)]
         [Route("stream/{id}")]
         public async Task<IActionResult> StreamVideo([FromRoute] int id)
         {

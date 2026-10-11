@@ -3,6 +3,7 @@ using MainServer.Enum;
 using MainServer.Interfaces;
 using MainServer.Services.Main;
 using Microsoft.EntityFrameworkCore;
+using SharedLib.Contracts.Admin;
 using SharedLib.Contracts.Request.Video;
 using SharedLib.Contracts.Response.Video;
 using SharedLib.Contracts.RezultModels;
@@ -290,6 +291,21 @@ namespace MainServer.Services.ForController
 
             return video;
         }//Получение метаданных видео
+
+        public async Task<List<Video>> GetUnverifiedVideosAsync(QueryParameters parameters)
+        {
+            var query = _context.Videos
+                .AsNoTracking()
+                .Where(v => !v.IsVerified);
+
+            int skip = (parameters.Page - 1) * parameters.PageSize;
+
+            return await query
+                .OrderBy(v => v.Id)
+                .Skip(skip)
+                .Take(parameters.PageSize)
+                .ToListAsync();
+        }//Получение списка неверифицированных видео для верификатора
 
         public async Task<int> NewVideoAsync(VideoUploadRequest request, int AuthorId)
         {

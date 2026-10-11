@@ -13,18 +13,18 @@ namespace MainServer.Services.Main
         private readonly IGetObjectService _getObjectService;
         private readonly ITokenService _tokenService;
         private readonly ILogger<RequireRole> _logger;
-        private readonly UserRole _requiredRole;
+        private readonly UserRole[] _requiredRoles;
 
         public RequireRole(
             IGetObjectService getObjectService,
             ITokenService tokenService,
             ILogger<RequireRole> logger,
-            UserRole requiredRole)
+            UserRole[] requiredRoles)
         {
             _getObjectService = getObjectService;
             _tokenService = tokenService;
             _logger = logger;
-            _requiredRole = requiredRole;
+            _requiredRoles = requiredRoles;
         }
 
         public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
@@ -54,10 +54,10 @@ namespace MainServer.Services.Main
                     return;
                 }
 
-                // Сравниваем роль из токена с требуемой
-                if (roleClaim != _requiredRole.ToString())
+                // Сравниваем роль из токена с одной из требуемых
+                if (!_requiredRoles.Any(role => role.ToString() == roleClaim))
                 {
-                    _logger.LogWarning($"Недостаточно прав. Требуется: {_requiredRole}, текущая: {roleClaim}");
+                    _logger.LogWarning($"Недостаточно прав. Требуется: {string.Join(", ", _requiredRoles.Select(r => r.ToString()))}, текущая: {roleClaim}");
                     context.Result = new ForbidResult();
                     return;
                 }
@@ -75,7 +75,12 @@ namespace MainServer.Services.Main
     {
         public RequireRoleAttribute(UserRole requiredRole) : base(typeof(RequireRole))
         {
-            Arguments = new object[] { requiredRole };
+            Arguments = new object[] { new[] { requiredRole } };
+        }
+
+        public RequireRoleAttribute(params UserRole[] requiredRoles) : base(typeof(RequireRole))
+        {
+            Arguments = new object[] { requiredRoles };
         }
     }
 }
