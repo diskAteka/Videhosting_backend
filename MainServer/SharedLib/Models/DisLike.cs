@@ -2,7 +2,7 @@
 
 namespace SharedLib.Models
 {
-    public partial class DisLike : IModel, IDeleteble, IUpdateble, IAddble
+    public partial class Dislike : IModel, IDeleteble, IUpdateble, IAddble
     {
         public int Id { get; set; }
 

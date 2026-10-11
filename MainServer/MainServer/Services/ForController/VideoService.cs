@@ -7,7 +7,6 @@ using SharedLib.Contracts.Request.Video;
 using SharedLib.Contracts.Response.Video;
 using SharedLib.Contracts.RezultModels;
 using SharedLib.Models;
-using System.Data.Common;
 using View = SharedLib.Models.View;
 
 
@@ -52,35 +51,56 @@ namespace MainServer.Services.ForController
 
         public async Task<List<VideoListItemResponse>> GetAllVideoAsync()
         {
-            List<VideoListItemResponse> videoList = await _context.Videos
+            var videos = await _context.Videos
                 .AsNoTracking()
                 .Include(v => v.Author)
                 .OrderByDescending(v => v.Views)
                 .Where(v => v.IsVerified)
                 .Take(20)
-                .Select(v => new VideoListItemResponse
+                .Select(v => new
                 {
-                    Id = v.Id,
-                    Name = v.Name,
-                    Poster = v.PosterUrl,
-                    DateUpload = v.DateUpload,
+                    v.Id,
+                    v.Name,
+                    v.Poster, 
+                    v.DateUpload,
                     AuthorName = v.Author.Name
                 })
                 .ToListAsync();
 
-            return videoList;
+            var result = new List<VideoListItemResponse>();
+
+            foreach (var v in videos)
+            {
+                var posterUrl = await _storageService.GeneratePresignedUrlAsync(v.Poster, 24);
+
+                result.Add(new VideoListItemResponse
+                {
+                    Id = v.Id,
+                    Name = v.Name,
+                    Poster = posterUrl,
+                    DateUpload = v.DateUpload,
+                    AuthorName = v.AuthorName
+                });
+            }
+
+            return result;
         }//Возвращает коллекцию из максимум 20 видео или возвращает null
 
         public async Task<VideoDetailsResponse> GetVideoAsync(int videoId, int userId)
         {
-            bool isViewed = await _context.Views.FirstOrDefaultAsync(v => v.UserId == userId && v.VideoId == videoId) != null;
+            bool isAuthenticatedUser = userId > 0;
 
-            if (!isViewed)
+            if (isAuthenticatedUser)
             {
-                await _context.AddAsync(new View { UserId = userId, VideoId = videoId });
-                await _context.Videos.Where(v => v.Id == videoId)
-                    .ExecuteUpdateAsync(s => s.SetProperty(v => v.Views, v => v.Views + 1));
-                await _context.SaveChangesAsync();
+                bool isViewed = await _context.Views.FirstOrDefaultAsync(v => v.UserId == userId && v.VideoId == videoId) != null;
+
+                if (!isViewed)
+                {
+                    await _context.AddAsync(new View { UserId = userId, VideoId = videoId });
+                    await _context.Videos.Where(v => v.Id == videoId)
+                        .ExecuteUpdateAsync(s => s.SetProperty(v => v.Views, v => v.Views + 1));
+                    await _context.SaveChangesAsync();
+                }
             }
 
             Video? v = await _context.Videos
@@ -95,8 +115,10 @@ namespace MainServer.Services.ForController
 
             ICollection<Comment> c = v.Comments ?? new List<Comment>();
 
-            bool isLiked = await _context.Likes.AsNoTracking().AnyAsync(l => l.UserId == userId && l.VideoId == videoId);
-            bool isDisliked = await _context.DisLikes.AsNoTracking().AnyAsync(d => d.UserId == userId && d.VideoId == videoId);
+            bool isLiked = isAuthenticatedUser && await _context.Likes.AsNoTracking()
+                .AnyAsync(l => l.UserId == userId && l.VideoId == videoId);
+            bool isDisliked = isAuthenticatedUser && await _context.DisLikes.AsNoTracking()
+                .AnyAsync(d => d.UserId == userId && d.VideoId == videoId);
 
             List<CommentResponse> Comments = c.Select(c => new CommentResponse
             {
@@ -116,7 +138,7 @@ namespace MainServer.Services.ForController
                 Description = v.Description,
                 DateUpload = v.DateUpload,
                 Link = v.Link,
-                Poster = v.Poster,
+                Poster = await _storageService.GeneratePresignedUrlAsync(v.Poster, expiryHours: 24),
                 Views = v.Views,
                 Likes = v.Likes,
                 Dislikes = v.Dislikes,
@@ -133,52 +155,51 @@ namespace MainServer.Services.ForController
         public async Task<List<VideoListItemResponse>> VideoSearchAsync(string query, int limit = 10)
         {
             var searchLower = query.ToLower().Trim();
-
             if (searchLower.Length < 2) return new List<VideoListItemResponse>();
 
-            var videoQuery = _context.Videos
+            var videos = await _context.Videos
                 .Where(v => v.IsVerified)
                 .Include(v => v.Author)
                 .Where(v => v.Name.ToLower().Contains(searchLower) ||
-                       v.Description != null && v.Description.ToLower().Contains(searchLower));
+                            (v.Description != null && v.Description.ToLower().Contains(searchLower)))
+                .ToListAsync();
 
-            var videos = await videoQuery.ToListAsync();
-
-            var respose = videos
-                .Select(v => new
-                {
-                    Video = v,
-                    Score = CalculateRelevanceScore(v, searchLower)
-                })
+            var scored = videos
+                .Select(v => new { Video = v, Score = CalculateRelevanceScore(v, searchLower) })
                 .OrderByDescending(x => x.Score)
                 .ThenByDescending(x => x.Video.Views)
                 .Take(limit)
-                .Select(x => new VideoListItemResponse
-                {
-                    Id = x.Video.Id,
-                    Name = x.Video.Name,
-                    Poster = x.Video.PosterUrl,
-                    DateUpload = x.Video.DateUpload,
-                    AuthorName = x.Video.Author.Name
-                })
                 .ToList();
-            return respose;
+
+            var result = new List<VideoListItemResponse>();
+            foreach (var item in scored)
+            {
+                result.Add(new VideoListItemResponse
+                {
+                    Id = item.Video.Id,
+                    Name = item.Video.Name,
+                    Poster = await _storageService.GeneratePresignedUrlAsync(item.Video.Poster, 24),
+                    DateUpload = item.Video.DateUpload,
+                    AuthorName = item.Video.Author.Name
+                });
+            }
+            return result;
         }//Получение массива с данными о 10 видео наиболее соответсвующих
 
-        public async Task NewCommentAsync(CommentCreateDto request)
+        public async Task NewCommentAsync(CreateCommentRequest request, int userId, int videoId)
         {
-            var videoExists = await _context.Videos.AnyAsync(v => v.Id == request.VideoId);
+            var videoExists = await _context.Videos.AnyAsync(v => v.Id == videoId);
 
             if (!videoExists)
-                throw new ApiException(ErrorType.NotFound, $"Видео {request.VideoId} не найдено");
+                throw new ApiException(ErrorType.NotFound, $"Видео {videoId} не найдено");
 
             if (string.IsNullOrWhiteSpace(request.Text) || request.Text.Length > 1000)
                 throw new ApiException(ErrorType.ValidationError, "Комментарий должен содержать 1-1000 символов");
 
             Comment comment = new()
             {
-                VideoId = request.VideoId,
-                UserId = request.UserId,
+                VideoId = videoId,
+                UserId = userId,
                 Text = request.Text,
                 Date = DateTime.Now
             };
@@ -210,18 +231,15 @@ namespace MainServer.Services.ForController
             return comments;
         }//Получает список комментариев к видео
 
-        public async Task ReactionAsync(ReactionRequest request)
+        public async Task ReactionAsync(ReactionRequest request, int userId, int videoId)
         {
             bool IsLike = request.IsLike;
-            int userId = request.UserId;
-            int videoId = request.VideoId;
-
             using var transaction = await _context.Database.BeginTransactionAsync();
 
             try
             {
                 Like? existLike = await _context.Likes.FirstOrDefaultAsync(l => l.UserId == userId && l.VideoId == videoId);
-                DisLike? existDislike = await _context.DisLikes.FirstOrDefaultAsync(d => d.UserId == userId && d.VideoId == videoId);
+                Dislike? existDislike = await _context.DisLikes.FirstOrDefaultAsync(d => d.UserId == userId && d.VideoId == videoId);
 
                 if (IsLike)
                 {
@@ -377,22 +395,36 @@ namespace MainServer.Services.ForController
 
         public async Task<List<UserVideoListItemDto>> GetThisUserVideos(int userId)
         {
-            List<UserVideoListItemDto> videoList = await _context.Videos
+            var videos = await _context.Videos
                 .AsNoTracking()
                 .Include(v => v.Author)
                 .OrderByDescending(v => v.Views)
                 .Where(v => v.AuthorId == userId)
-                .Select(v => new UserVideoListItemDto
+                .Select(v => new
+                {
+                    v.Id,
+                    v.Name,
+                    v.Poster,
+                    v.DateUpload,
+                    AuthorName = v.Author.Name,
+                    v.IsVerified
+                })
+                .ToListAsync();
+
+            var result = new List<UserVideoListItemDto>();
+            foreach (var v in videos)
+            {
+                result.Add(new UserVideoListItemDto
                 {
                     Id = v.Id,
                     Name = v.Name,
-                    Poster = v.PosterUrl,
+                    Poster = await _storageService.GeneratePresignedUrlAsync(v.Poster, 24),
                     DateUpload = v.DateUpload,
-                    AuthorName = v.Author.Name,
+                    AuthorName = v.AuthorName,
                     IsVerified = v.IsVerified
-                })
-                .ToListAsync();
-            return videoList;
+                });
+            }
+            return result;
         }
 
         public async Task<DeleteResult> DeleteVideoAsync(int videoId)
@@ -430,7 +462,7 @@ namespace MainServer.Services.ForController
             await _context.Videos.Where(v => v.Id == videoId).ExecuteUpdateAsync(s => s.SetProperty(v => v.Likes, v => v.Likes + 1));
         }
 
-        private async Task DeleteDislike(DisLike dislike, int videoId)
+        private async Task DeleteDislike(Dislike dislike, int videoId)
         {
             _context.Remove(dislike);
             await _context.Videos.Where(v => v.Id == videoId).ExecuteUpdateAsync(s => s.SetProperty(v => v.Dislikes, v => v.Dislikes - 1));
@@ -438,7 +470,7 @@ namespace MainServer.Services.ForController
 
         private async Task AddDislike(int userId, int videoId)
         {
-            await _context.DisLikes.AddAsync(new DisLike { UserId = userId, VideoId = videoId });
+            await _context.DisLikes.AddAsync(new Dislike { UserId = userId, VideoId = videoId });
             await _context.Videos.Where(v => v.Id == videoId).ExecuteUpdateAsync(s => s.SetProperty(v => v.Dislikes, v => v.Dislikes + 1));
         }
 

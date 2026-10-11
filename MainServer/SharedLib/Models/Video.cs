@@ -31,7 +31,7 @@ namespace SharedLib.Models
 
         public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
 
-        public virtual ICollection<DisLike> DisLikes { get; set; } = new List<DisLike>();
+        public virtual ICollection<Dislike> DislikesNavigation { get; set; } = new List<Dislike>();
 
         public virtual ICollection<Like> LikesNavigation { get; set; } = new List<Like>();
 

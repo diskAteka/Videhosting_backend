@@ -56,7 +56,7 @@ namespace MainServer.Enum
             { "Comment", typeof(Comment) },
             { "Video", typeof(Video) },
             { "ServerLog", typeof(ServerLog) },
-            { "Dislike", typeof(DisLike) },
+            { "Dislike", typeof(Dislike) },
             { "Like", typeof(Like) },
             { "View", typeof(View) },
             { "Employee", typeof(Employee) }

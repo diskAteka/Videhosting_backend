@@ -7,8 +7,8 @@
         public string? Poster { get; set; }
         public DateTime DateUpload { get; set; }
         public string? AuthorName {  get; set; }
-
     }
+
     public class UserVideoListItemDto
     {
         public int Id { get; set; }

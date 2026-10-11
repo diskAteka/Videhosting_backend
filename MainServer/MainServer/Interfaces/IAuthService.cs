@@ -7,9 +7,9 @@ namespace MainServer.Interfaces
 {
     public interface IAuthService
     {
-        public Task<RegisterResponse> RegisterAsync(RegisterRequest request);
-        public Task<LoginResponse> LoginAsync(LoginRequest request);
-        public Task<GetMeResultDto> GetMeAsync(int id);
+        public Task<TokenResponse> RegisterAsync(RegisterRequest request);
+        public Task<TokenResponse> LoginAsync(LoginRequest request);
+        public Task<MeResponse> GetMeAsync(int id);
         public Task<UpdateRezult>ForcedPasswordResetAsync(int id, ForcedPasswordResetRequest request);
         public Task<AddRezult> ForcedUserAddAsync(PostUserRequest request);
         public Task<UpdateRezult> ForcedUserUpdateAsync(int id, PutUserRequest request);

@@ -7,7 +7,7 @@ namespace SharedLib.Contracts.Request.Auth
     {
         public string? Email { get; set; }
         [JsonPropertyName("username")]
-        public string? UserName { get; set; }
+        public string? Username { get; set; }
         [Required(ErrorMessage = "Пароль обязателен")]
         [MinLength(6, ErrorMessage = "Пароль минимум 6 символов")]
         public string Password { get; set; } = string.Empty;

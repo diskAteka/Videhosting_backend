@@ -9,6 +9,7 @@ namespace MainServer.Controllers
 {
     [ApiController]
     [Route("api/auth")]
+    [ApiExplorerSettings(GroupName = "v1")]
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
@@ -19,21 +20,24 @@ namespace MainServer.Controllers
         }
 
         [HttpPost("register")]
+        [ProducesResponseType(typeof(TokenResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            RegisterResponse result = await _authService.RegisterAsync(request);
+            TokenResponse result = await _authService.RegisterAsync(request);
             return Ok(result);
         }
 
         [HttpPost("login")]
+        [ProducesResponseType(typeof(TokenResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            LoginResponse result = await _authService.LoginAsync(request);
+            TokenResponse result = await _authService.LoginAsync(request);
             return Ok(result);
         }
 
         [HttpGet("me")]
         [Authorize]
+        [ProducesResponseType(typeof(MeResponse), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetMe()
         {
             var nameIdentifier = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -41,7 +45,7 @@ namespace MainServer.Controllers
                 return Unauthorized(new { message = "Не удалось определить идентификатор пользователя." });
 
             int id = int.Parse(nameIdentifier);
-            GetMeResultDto result = await _authService.GetMeAsync(id);
+            MeResponse result = await _authService.GetMeAsync(id);
             return Ok(result);
         }
     }

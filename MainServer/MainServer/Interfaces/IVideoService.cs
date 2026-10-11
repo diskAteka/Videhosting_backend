@@ -11,8 +11,8 @@ namespace MainServer.Interfaces
         public Task<List<VideoListItemResponse>> GetAllVideoAsync();
         public Task<VideoDetailsResponse> GetVideoAsync(int videoId, int userId);
         public Task<List<VideoListItemResponse>> VideoSearchAsync(string query, int limit = 10);
-        public Task NewCommentAsync(CommentCreateDto request);
-        public Task ReactionAsync(ReactionRequest request);
+        public Task NewCommentAsync(CreateCommentRequest request, int userId, int videoId);
+        public Task ReactionAsync(ReactionRequest request, int userId, int videoId);
         public Task<List<CommentResponse>> GetCommentsAsync(int videoId);
         public Task<Video> GetVideoMetadataAsync(int videoId);
         public Task<int> NewVideoAsync(VideoUploadRequest request, int AuthorId);

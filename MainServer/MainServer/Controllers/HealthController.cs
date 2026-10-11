@@ -6,6 +6,7 @@ namespace MainServer.Controllers
 {
     [ApiController]
     [Route("health")]
+    [ApiExplorerSettings(GroupName = "v3")]
     public class HealthController : ControllerBase
     {
         private readonly AppDbContext _dbContext;

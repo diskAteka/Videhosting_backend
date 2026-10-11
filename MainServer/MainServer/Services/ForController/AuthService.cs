@@ -28,7 +28,7 @@ namespace MainServer.Services.ForController
             _tokenService = tokenService;
         }
 
-        public async Task<RegisterResponse> RegisterAsync(RegisterRequest register)
+        public async Task<TokenResponse> RegisterAsync(RegisterRequest register)
         {
             User? existingUser = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Email == register.Email);
 
@@ -39,7 +39,7 @@ namespace MainServer.Services.ForController
 
             User user = new User
             {
-                Name = register.UserName.Trim(),
+                Name = register.Username.Trim(),
                 Email = register.Email.ToLowerInvariant(),
                 PasswordHash = passwordhash.hash,
                 PasswordSalt = passwordhash.salt,
@@ -50,10 +50,24 @@ namespace MainServer.Services.ForController
 
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
-            return RegisterResponse.Ok();
+            string token = _tokenService.GenerateToken(user.Id, user.Name, user.Email, user.CanUpload);
+            TokenResponse respose = new()
+            {
+                Token = token,
+                User = new UserResponse()
+                {
+                    Id = user.Id,
+                    Name = user.Name,
+                    Email = user.Email,
+                    IsActive = user.IsActive,
+                    CanUpload = user.CanUpload,
+                    RegisteredAt = user.RegisteredAt
+                }
+            };
+            return respose;
         }
 
-        public async Task<LoginResponse> LoginAsync(LoginRequest login)
+        public async Task<TokenResponse> LoginAsync(LoginRequest login)
         {
             // 1. Базовая валидация входных данных
             if (login == null)
@@ -62,12 +76,12 @@ namespace MainServer.Services.ForController
             if (string.IsNullOrEmpty(login.Password))
                 throw new ApiException(ErrorType.ValidationError, "Пароль обязателен");
 
-            if (string.IsNullOrEmpty(login.Email) && string.IsNullOrEmpty(login.UserName))
+            if (string.IsNullOrEmpty(login.Email) && string.IsNullOrEmpty(login.Username))
                 throw new ApiException(ErrorType.ValidationError, "Email или имя пользователя обязательны");
 
             // 2. Подготавливаем значения ДО запроса к БД
             var email = login.Email?.Trim().ToLowerInvariant();
-            var userName = login.UserName?.Trim().ToLower();
+            var userName = login.Username?.Trim().ToLower();
 
             // 3. Строим запрос динамически
             IQueryable<User> query = _context.Users;
@@ -101,7 +115,7 @@ namespace MainServer.Services.ForController
                 user.Email,
                 user.CanUpload);
 
-            return new LoginResponse
+            return new TokenResponse
             {
                 Token = token,
                 User = new UserResponse
@@ -116,7 +130,7 @@ namespace MainServer.Services.ForController
             };
         }
 
-        public async Task<GetMeResultDto> GetMeAsync(int id)
+        public async Task<MeResponse> GetMeAsync(int id)
         {
             if (id <= 0)
                 throw new ApiException(ErrorType.ValidationError, $"ID должен быть больше 0. Получено: {id}");
@@ -126,15 +140,17 @@ namespace MainServer.Services.ForController
             if (user == null)
                 throw new ApiException(ErrorType.NotFound, $"Пользователя с ID {id} не существует");
 
-            var result = new GetMeResultDto
+            var result = new MeResponse
             {
                 Name = user.Name,
                 Email = user.Email,
                 CanUpload = user.CanUpload,
                 IsActive = user.IsActive,
+                Success = true,
+                Message = "Пользователь найден"
             };
 
-            return GetMeResultDto.Ok(result);
+            return result;
         }
 
         public async Task<UpdateRezult> ForcedPasswordResetAsync(int id, ForcedPasswordResetRequest request)

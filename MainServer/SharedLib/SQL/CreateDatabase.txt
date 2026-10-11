@@ -120,7 +120,7 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE TABLE [dbo].[DisLike](
+CREATE TABLE [dbo].[Dislike](
 	[Id] [int] IDENTITY(1,1) NOT NULL,
 	[VideoId] [int] NOT NULL,
 	[UserId] [int] NOT NULL,

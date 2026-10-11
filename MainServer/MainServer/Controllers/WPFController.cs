@@ -13,6 +13,7 @@ namespace MainServer.Controllers
 {
     [ApiController]
     [Route("wpf")]
+    [ApiExplorerSettings(GroupName = "v2")]
     public class WPFController : ControllerBase
     {
         private readonly IAddObjectService _addObjectService;
@@ -66,7 +67,7 @@ namespace MainServer.Controllers
                 { typeof(Video), async () => await _getObjectService.GetCountOfRecordsAsync<Video>() },
                 { typeof(Comment), async () => await _getObjectService.GetCountOfRecordsAsync<Comment>() },
                 { typeof(Like), async () => await _getObjectService.GetCountOfRecordsAsync<Like>() },
-                { typeof(DisLike), async () => await _getObjectService.GetCountOfRecordsAsync<DisLike>() },
+                { typeof(Dislike), async () => await _getObjectService.GetCountOfRecordsAsync<Dislike>() },
                 { typeof(View), async () => await _getObjectService.GetCountOfRecordsAsync<View>() },
                 { typeof(Employee), async () => await _getObjectService.GetCountOfRecordsAsync<Employee>() },
                 {typeof(ServerLog), async () => await _getObjectService.GetCountOfRecordsAsync<ServerLog>() }
@@ -107,7 +108,7 @@ namespace MainServer.Controllers
         [RequireRole(UserRole.Admin)]
         public async Task<IActionResult> DeleteDislike([FromRoute] int id)
         {
-            var response = await _deleteObjectService.DeleteAsync<DisLike>(id);
+            var response = await _deleteObjectService.DeleteAsync<Dislike>(id);
             return Ok(response);
         }
 
@@ -233,7 +234,7 @@ namespace MainServer.Controllers
         [RequireRole(UserRole.Admin)]
         public async Task<IActionResult> AddDislike([FromBody] PostDislikeRequest dislike)
         {
-            var request = _mapper.Map<DisLike>(dislike);
+            var request = _mapper.Map<Dislike>(dislike);
             var response = await _addObjectService.AddAsync(request);
             return Ok(response);
         }
@@ -317,7 +318,7 @@ namespace MainServer.Controllers
         [Route("get/dislikes")]
         public async Task<IActionResult> GetDislikes([FromQuery] QueryParameters parameters)
         {
-            var dislikes = await _getObjectService.GetObjectsAsync<DisLike>(parameters);
+            var dislikes = await _getObjectService.GetObjectsAsync<Dislike>(parameters);
             var response = _mapper.Map<List<GetDislikeResponse>>(dislikes);
             return Ok(response);
         }
@@ -461,7 +462,7 @@ namespace MainServer.Controllers
         [Authorize]
         public async Task<IActionResult> GetDislike([FromRoute] int id)
         {
-            var dislike = await _getObjectService.GetObjectAsync<DisLike>(id);
+            var dislike = await _getObjectService.GetObjectAsync<Dislike>(id);
             var response = _mapper.Map<GetDislikeResponse>(dislike);
             return Ok(response);
         }

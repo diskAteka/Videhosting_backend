@@ -17,7 +17,7 @@ public partial class AppDbContext : DbContext
     }
     public virtual DbSet<Comment> Comments { get; set; }
 
-    public virtual DbSet<DisLike> DisLikes { get; set; }
+    public virtual DbSet<Dislike> DisLikes { get; set; }
 
     public virtual DbSet<Employee> Employees { get; set; }
 
@@ -57,7 +57,7 @@ public partial class AppDbContext : DbContext
                 .HasConstraintName("FK__Comment__VideoId__5AEE82B9");
         });
 
-        modelBuilder.Entity<DisLike>(entity =>
+        modelBuilder.Entity<Dislike>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__DisLike__3214EC07DD447E75");
 
@@ -65,12 +65,12 @@ public partial class AppDbContext : DbContext
 
             entity.HasIndex(e => new { e.VideoId, e.UserId }, "IX_DisLike_VideoId_UserId").IsUnique();
 
-            entity.HasOne(d => d.User).WithMany(p => p.DisLikes)
+            entity.HasOne(d => d.User).WithMany(p => p.Dislikes)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__DisLike__UserId__6754599E");
 
-            entity.HasOne(d => d.Video).WithMany(p => p.DisLikes)
+            entity.HasOne(d => d.Video).WithMany(p => p.DislikesNavigation)
                 .HasForeignKey(d => d.VideoId)
                 .HasConstraintName("FK__DisLike__VideoId__66603565");
         });

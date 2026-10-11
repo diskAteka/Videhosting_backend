@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using SharedLib.Interfaces;
 using System.Text;
 
@@ -90,7 +91,12 @@ builder.WebHost.ConfigureKestrel(options =>
 });
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "API v1 (Client)", Version = "v1" });
+    c.SwaggerDoc("v2", new OpenApiInfo { Title = "API v2 (Admin)", Version = "v2" });
+    c.SwaggerDoc("v3", new OpenApiInfo { Title = "API v3 (Debag)", Version = "v3" });
+});
 builder.Services.AddControllers();
 
 var app = builder.Build();

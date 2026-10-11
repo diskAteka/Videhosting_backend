@@ -12,14 +12,14 @@ namespace MainServer.Services.ForService
             CreateMap<Comment, GetCommentResponse>();
             CreateMap<Video, GetVideoResponse>();
             CreateMap<Like, GetLikeResponse>();
-            CreateMap<DisLike, GetDislikeResponse>();
+            CreateMap<Dislike, GetDislikeResponse>();
             CreateMap<View, GetViewResponse>();
             CreateMap<ServerLog, GetServerLogResponse>();
 
             CreateMap<PostPutCommentRequest, Comment>();
             CreateMap<PostVideoRequest, Video>();
             CreateMap<PostLikeRequest, Like>();
-            CreateMap<PostDislikeRequest, DisLike>();
+            CreateMap<PostDislikeRequest, Dislike>();
             CreateMap<PostViewRequest, View>();
             CreateMap<PostLikeRequest, Like>();
             CreateMap<PostPutEmployeeRequest, Employee>();

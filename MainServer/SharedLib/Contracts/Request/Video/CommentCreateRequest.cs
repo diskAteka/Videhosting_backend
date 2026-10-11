@@ -1,11 +1,11 @@
 ﻿namespace SharedLib.Contracts.Request.Video
 {
-    public class CommentCreateRequest
+    public class CreateCommentRequest
     {
         public string? Text { get; set; }
     }
 
-    public class CommentCreateDto
+    public class CreateCommentResponse
     {
         public int UserId { get; set; }
         public string? Text { get; set; }
