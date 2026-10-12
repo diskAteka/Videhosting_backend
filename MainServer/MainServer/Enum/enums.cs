@@ -23,7 +23,7 @@ namespace MainServer.Enum
     public enum UserRole
     {
         Admin,
-        Virifier
+        Verifier
     }
 
     public enum AdminTables

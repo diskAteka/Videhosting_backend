@@ -17,7 +17,7 @@ namespace MainServer.Interfaces
         public Task<Video> GetVideoMetadataAsync(int videoId);
         public Task<int> NewVideoAsync(VideoUploadRequest request, int AuthorId);
         public Task<List<UserVideoListItemDto>> GetThisUserVideos(int userId);
-        public Task<List<Video>> GetUnverifiedVideosAsync(QueryParameters parameters);
+        public Task<List<GetVideoResponse>> GetUnverifiedVideosAsync(QueryParameters parameters);
         public Task<DeleteResult> DeleteVideoAsync(int videoId);
         public Task<UpdateRezult> VerifyVideoAsync(int videoId);
 

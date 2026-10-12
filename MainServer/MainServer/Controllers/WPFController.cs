@@ -350,13 +350,12 @@ namespace MainServer.Controllers
         #region virifier endpoints
 
         [HttpGet]
-        [RequireRole(UserRole.Virifier)]
+        [RequireRole(UserRole.Verifier)]
         [Route("virifier/videos")]
         public async Task<IActionResult> GetUnverifiedVideos([FromQuery] QueryParameters parameters)
         {
             var videos = await _videoService.GetUnverifiedVideosAsync(parameters);
-            var response = _mapper.Map<List<GetVideoResponse>>(videos);
-            return Ok(response);
+            return Ok(videos);
         }
 
         #endregion
@@ -379,7 +378,7 @@ namespace MainServer.Controllers
 
         [HttpGet]
         [Route("virifier/get/count")]
-        [RequireRole(UserRole.Virifier)]
+        [RequireRole(UserRole.Verifier)]
         public async Task<IActionResult> GetCountForVirifier([FromQuery] string type)
         {
             if (string.IsNullOrEmpty(type))
@@ -420,7 +419,7 @@ namespace MainServer.Controllers
 
         [HttpGet]
         [Route("get/video/{id}")]
-        [RequireRole(UserRole.Admin, UserRole.Virifier)]
+        [RequireRole(UserRole.Admin, UserRole.Verifier)]
         public async Task<IActionResult> GetVideo([FromRoute] int id)
         {
             var video = await _getObjectService.GetObjectAsync<Video>(id);
@@ -486,7 +485,7 @@ namespace MainServer.Controllers
         #region stream endpoint
 
         [HttpGet]
-        [RequireRole(UserRole.Admin, UserRole.Virifier)]
+        [RequireRole(UserRole.Admin, UserRole.Verifier)]
         [Route("stream/{id}")]
         public async Task<IActionResult> StreamVideo([FromRoute] int id)
         {
@@ -501,7 +500,7 @@ namespace MainServer.Controllers
 
         [HttpGet]
         [Route("video/poster/{videoId}")]
-        [RequireRole(UserRole.Virifier)]
+        [RequireRole(UserRole.Verifier)]
         public async Task<IActionResult> GetPoster([FromRoute] int videoId)
         {
             var video = await _videoService.GetVideoMetadataAsync(videoId);
@@ -515,7 +514,7 @@ namespace MainServer.Controllers
 
         [HttpPut]
         [Route("video/verify/{id}")]
-        [RequireRole(UserRole.Virifier)]
+        [RequireRole(UserRole.Verifier)]
         public async Task<IActionResult> VerifyVideo([FromRoute] int id)
         {
             var response = await _videoService.VerifyVideoAsync(id);

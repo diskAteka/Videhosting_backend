@@ -19,11 +19,16 @@ namespace MainServer.Services.DataBaseServices
         public async Task<UpdateRezult> UpdateAsync<T>(T table) where T : class, IUpdateble
         {
             var dbSet = _context.Set<T>();
-            bool exists = await dbSet.AnyAsync(e => EF.Property<int>(e, "Id") == EF.Property<int>(table, "Id"));
+
+            var idProperty = typeof(T).GetProperty("Id")
+                ?? throw new ApiException(ErrorType.ServerError, $"У типа {typeof(T)} отсутствует свойство Id");
+            int id = (int)(idProperty.GetValue(table) ?? 0);
+
+            bool exists = await dbSet.AnyAsync(e => EF.Property<int>(e, "Id") == id);
 
             if (!exists)
                 throw new ApiException(ErrorType.NotFound,
-                    $"Объект типа {typeof(T)} с id {EF.Property<int>(table, "Id")} не найден");
+                    $"Объект типа {typeof(T)} с id {id} не найден");
 
             dbSet.Update(table);
             var affectedTables = AffectedTableNames();

@@ -292,19 +292,37 @@ namespace MainServer.Services.ForController
             return video;
         }//Получение метаданных видео
 
-        public async Task<List<Video>> GetUnverifiedVideosAsync(QueryParameters parameters)
+        public async Task<List<GetVideoResponse>> GetUnverifiedVideosAsync(QueryParameters parameters)
         {
-            var query = _context.Videos
-                .AsNoTracking()
-                .Where(v => !v.IsVerified);
-
             int skip = (parameters.Page - 1) * parameters.PageSize;
 
-            return await query
+            var videos = await _context.Videos
+                .AsNoTracking()
+                .Where(v => !v.IsVerified)
                 .OrderBy(v => v.Id)
                 .Skip(skip)
                 .Take(parameters.PageSize)
                 .ToListAsync();
+
+            var result = new List<GetVideoResponse>();
+            foreach (var v in videos)
+            {
+                result.Add(new GetVideoResponse
+                {
+                    Id = v.Id,
+                    Name = v.Name,
+                    Description = v.Description,
+                    DateUpload = v.DateUpload,
+                    Link = v.Link,
+                    Poster = await _storageService.GeneratePresignedUrlAsync(v.Poster, 24),
+                    Likes = v.Likes,
+                    Dislikes = v.Dislikes,
+                    IsVerified = v.IsVerified,
+                    Views = v.Views,
+                    AuthorId = v.AuthorId
+                });
+            }
+            return result;
         }//Получение списка неверифицированных видео для верификатора
 
         public async Task<int> NewVideoAsync(VideoUploadRequest request, int AuthorId)

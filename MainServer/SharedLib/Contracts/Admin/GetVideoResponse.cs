@@ -25,6 +25,8 @@ namespace SharedLib.Contracts.Admin
         public int Views { get; set; }
 
         public int AuthorId { get; set; }
+
+        public string PosterUrl => $"{Poster}";
     }
 
     public class PostVideoRequest
