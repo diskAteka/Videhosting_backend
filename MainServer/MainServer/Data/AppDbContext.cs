@@ -81,7 +81,7 @@ public partial class AppDbContext : DbContext
 
             entity.ToTable("Employee");
 
-            entity.Property(e => e.Id).ValueGeneratedNever();
+            entity.Property(e => e.Id).ValueGeneratedOnAdd();
             entity.Property(e => e.Password).HasMaxLength(50);
             entity.Property(e => e.Role).HasMaxLength(20);
             entity.Property(e => e.UserName).HasMaxLength(50);
@@ -149,6 +149,11 @@ public partial class AppDbContext : DbContext
                 .IsUnicode(false)
                 .IsFixedLength();
             entity.Property(e => e.RegisteredAt).HasDefaultValueSql("(getutcdate())");
+
+            // Логи пишет сотрудник (Employee), а не пользователь (User).
+            // Коллекция User.ServerLogs осталась от старой модели и без конфигурации
+            // заставляет EF создавать shadow-FK ServerLog.UserId, которой нет в таблице.
+            entity.Ignore(u => u.ServerLogs);
         });
 
         modelBuilder.Entity<Video>(entity =>

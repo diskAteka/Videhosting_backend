@@ -72,7 +72,6 @@ namespace MainServer.Services.ForService
             }
         }
 
-        // Также улучшим метод UploadFileAsync для дополнительной проверки
         public async Task UploadFileAsync(string filePath, string objectKey, string contentType)
         {
             // Проверяем существование файла перед загрузкой
@@ -132,17 +131,18 @@ namespace MainServer.Services.ForService
 
         public async Task DeleteObjectsAsync(params string[] keys)
         {
-            if (keys.Length == 0) return;
+            var validKeys = keys.Where(k => !string.IsNullOrWhiteSpace(k)).ToArray();
+            if (validKeys.Length == 0) return;
 
             var request = new DeleteObjectsRequest
             {
                 BucketName = _bucketName,
-                Objects = keys.Select(k => new KeyVersion { Key = k }).ToList()
+                Objects = validKeys.Select(k => new KeyVersion { Key = k }).ToList()
             };
 
             var response = await _client.DeleteObjectsAsync(request);
 
-            if (response.DeleteErrors.Any())
+            if (response.DeleteErrors?.Any() == true)
             {
                 var errors = string.Join(", ", response.DeleteErrors.Select(e => $"{e.Key}: {e.Message}"));
                 _logger.LogWarning("Ошибки удаления объектов: {Errors}", errors);

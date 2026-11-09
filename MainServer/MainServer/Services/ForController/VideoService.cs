@@ -298,6 +298,7 @@ namespace MainServer.Services.ForController
 
             var videos = await _context.Videos
                 .AsNoTracking()
+                .Include(v => v.Author)
                 .Where(v => !v.IsVerified)
                 .OrderBy(v => v.Id)
                 .Skip(skip)
@@ -319,7 +320,8 @@ namespace MainServer.Services.ForController
                     Dislikes = v.Dislikes,
                     IsVerified = v.IsVerified,
                     Views = v.Views,
-                    AuthorId = v.AuthorId
+                    AuthorId = v.AuthorId,
+                    AuthorName = v.Author?.Name
                 });
             }
             return result;

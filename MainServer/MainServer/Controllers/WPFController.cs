@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using MainServer.Contracts;
 using MainServer.Enum;
 using MainServer.Interfaces;
 using MainServer.Services;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using SharedLib.Contracts.Admin;
 using SharedLib.Interfaces;
 using SharedLib.Models;
+using System.Security.Claims;
 
 namespace MainServer.Controllers
 {
@@ -164,6 +166,17 @@ namespace MainServer.Controllers
             return Ok(response);                 
         }
 
+
+        [Route("update/employee/{id}")]
+        [HttpPut]
+        [RequireRole(UserRole.Admin)]
+        public async Task<IActionResult> UpdateEmployee([FromRoute] int id, [FromBody] PostPutEmployeeRequest employee)
+        {
+            var request = _mapper.Map<Employee>(employee);
+            request.Id = id;
+            var response = await _updateObjectService.UpdateAsync(request);
+            return Ok(response);
+        }
 
         [Route("update/comment/{id}")]
         [RequireRole(UserRole.Admin)]
@@ -336,6 +349,17 @@ namespace MainServer.Controllers
 
         [HttpGet]
         [RequireRole(UserRole.Admin)]
+        [Route("get/logs")]
+        public async Task<IActionResult> GetLogs([FromQuery] QueryParameters parameters)
+        {
+            var logs = await _getObjectService.GetObjectsAsync<ServerLog>(parameters);
+            var response = _mapper.Map<List<GetServerLogResponse>>(logs);
+            return Ok(response);
+        }
+
+
+        [HttpGet]
+        [RequireRole(UserRole.Admin)]
         [Route("get/user/videos")]
         public async Task<IActionResult> GetUserVideos([FromQuery] int userId)
         {
@@ -365,14 +389,39 @@ namespace MainServer.Controllers
         [HttpGet]
         [Route("admin/get/count")]
         [RequireRole(UserRole.Admin)]
-        public async Task<IActionResult> GetCount([FromQuery] string type)
+        public async Task<IActionResult> GetCount(
+            [FromQuery] string type,
+            [FromQuery] string? searchName,
+            [FromQuery] string? searchText,
+            [FromQuery] string? actionType)
         {
             if (string.IsNullOrEmpty(type))
                 return BadRequest(new { Message = "Параметр type обязателен" });
             if (!TableToClassMapper.TableToClassMap.ContainsKey(type))
                 return BadRequest(new { Message = $"Неверный тип объекта: {type}" });
             var objectType = TableToClassMapper.TableToClassMap[type];
-            int count = await _countDelegates[objectType]();
+
+            var parameters = new QueryParameters
+            {
+                SearchName = searchName,
+                SearchText = searchText,
+                ActionType = actionType
+            };
+
+            int count;
+            if (objectType == typeof(Video))
+                count = await _getObjectService.GetCountOfRecordsAsync<Video>(parameters);
+            else if (objectType == typeof(User))
+                count = await _getObjectService.GetCountOfRecordsAsync<User>(parameters);
+            else if (objectType == typeof(Comment))
+                count = await _getObjectService.GetCountOfRecordsAsync<Comment>(parameters);
+            else if (objectType == typeof(Employee))
+                count = await _getObjectService.GetCountOfRecordsAsync<Employee>(parameters);
+            else if (objectType == typeof(ServerLog))
+                count = await _getObjectService.GetCountOfRecordsAsync<ServerLog>(parameters);
+            else
+                count = await _countDelegates[objectType]();
+
             return Ok(new { Count = count });
         }
 
@@ -500,7 +549,7 @@ namespace MainServer.Controllers
 
         [HttpGet]
         [Route("video/poster/{videoId}")]
-        [RequireRole(UserRole.Verifier)]
+        [RequireRole(UserRole.Admin, UserRole.Verifier)]
         public async Task<IActionResult> GetPoster([FromRoute] int videoId)
         {
             var video = await _videoService.GetVideoMetadataAsync(videoId);
@@ -527,9 +576,30 @@ namespace MainServer.Controllers
 
         [HttpPost]
         [Route("log")]
-        [Authorize]
-        public async Task<IActionResult> LogAction([FromBody] ServerLog log)
+        [RequireRole(UserRole.Admin, UserRole.Verifier)]
+        public async Task<IActionResult> LogAction([FromBody] LogActionRequest request)
         {
+            // Авторство — только из токена. EmployeeId/Id/Date из тела игнорируем.
+            var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(claim, out var employeeId))
+                return Unauthorized();
+
+            if (string.IsNullOrWhiteSpace(request.Text) || string.IsNullOrWhiteSpace(request.AffectedTable))
+                return BadRequest(new { Message = "Text и AffectedTable обязательны" });
+
+            // CHECK-констрейнт в БД допускает только эти значения
+            if (request.ActionType is not ("INSERT" or "UPDATE" or "DELETE"))
+                return BadRequest(new { Message = $"Недопустимый ActionType: {request.ActionType}" });
+
+            var log = new ServerLog
+            {
+                Text = request.Text,
+                AffectedTable = request.AffectedTable,
+                ActionType = request.ActionType,
+                EmployeeId = employeeId,
+                Date = DateTime.Now
+            };
+
             var response = await _addObjectService.AddAsync(log);
             return Ok(response);
         }

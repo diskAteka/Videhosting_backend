@@ -11,6 +11,12 @@
         public string Text { get; set; } = null!;
 
         public DateTime Date { get; set; }
+
+        // Имя автора комментария (Comment.User.Name) — для карточки CommentItemControl
+        public string? UserName { get; set; }
+
+        // Название видео (Comment.Video.Name) — для карточки CommentItemControl
+        public string? VideoTitle { get; set; }
     }
 
     public class PostPutCommentRequest
