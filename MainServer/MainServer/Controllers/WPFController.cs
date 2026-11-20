@@ -72,7 +72,7 @@ namespace MainServer.Controllers
                 { typeof(Dislike), async () => await _getObjectService.GetCountOfRecordsAsync<Dislike>() },
                 { typeof(View), async () => await _getObjectService.GetCountOfRecordsAsync<View>() },
                 { typeof(Employee), async () => await _getObjectService.GetCountOfRecordsAsync<Employee>() },
-                {typeof(ServerLog), async () => await _getObjectService.GetCountOfRecordsAsync<ServerLog>() }
+                { typeof(ServerLog), async () => await _getObjectService.GetCountOfRecordsAsync<ServerLog>() }
             };
         }
 

@@ -31,21 +31,29 @@ public class StorageService : IStorageService
 
     public async Task<StorageUploadResult> UploadToStorageAsync(VideoUploadRequest request, int authorId, string tempFilePath)
     {
+        //Проверка что временный файл видео есть в директории
         if (!File.Exists(tempFilePath))
             throw new FileNotFoundException($"Видео не найдено: {tempFilePath}");
+
+        //Определение расширения и создание полного пути с нужным расширением
         var videoExt = Path.GetExtension(tempFilePath);
         var videoKey = _paths.BuildVideoKey(videoExt);
+
+        //Асинхронная загрузка видео в облачное хранилище
         await _s3.UploadFileAsync(tempFilePath, videoKey, GetMime(videoExt));
+
+        //Извлечение постера из видео
         var posterPath = await _posterService.ExtractPoster(tempFilePath);
-        string posterKey = null!;
+        string posterKey = null!; 
         try
         {
             var posterExt = Path.GetExtension(posterPath);
             posterKey = _paths.BuildPosterKey(posterExt);
-            await _s3.UploadFileAsync(posterPath, posterKey, GetMime(posterExt));
+            await _s3.UploadFileAsync(posterPath, posterKey, GetMime(posterExt)); //Загрузка постера в облачное хранилище
         }
         finally
         {
+            //Удаление временного файла после окончания загрузки
             if (File.Exists(posterPath))
             {
                 try
@@ -60,7 +68,7 @@ public class StorageService : IStorageService
                 }
             }
         }
-
+        //Вернуть ключ к постеру и видео
         return new StorageUploadResult
         {
             VideoKey = videoKey,

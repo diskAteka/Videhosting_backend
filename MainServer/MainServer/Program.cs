@@ -106,7 +106,12 @@ app.UseGlobalExceptionHandler();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Client API v1");
+        c.SwaggerEndpoint("/swagger/v2/swagger.json", "Admin API v2");
+        c.SwaggerEndpoint("/swagger/v3/swagger.json", "Debug API v3");
+    });
 }
 
 app.UseCors("FrontendPolicy");

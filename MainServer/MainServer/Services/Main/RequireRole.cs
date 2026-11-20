@@ -57,7 +57,8 @@ namespace MainServer.Services.Main
                 // Сравниваем роль из токена с одной из требуемых
                 if (!_requiredRoles.Any(role => role.ToString() == roleClaim))
                 {
-                    _logger.LogWarning($"Недостаточно прав. Требуется: {string.Join(", ", _requiredRoles.Select(r => r.ToString()))}, текущая: {roleClaim}");
+                    _logger.LogWarning($"Недостаточно прав. Требуется: " +
+                        $"{string.Join(", ", _requiredRoles.Select(r => r.ToString()))}, текущая: {roleClaim}");
                     context.Result = new ForbidResult();
                     return;
                 }

@@ -38,7 +38,7 @@ namespace MainServer.Services.ForController
                 new Claim(ClaimTypes.NameIdentifier, employeeId.ToString()),
                 new Claim(ClaimTypes.Name, userName),
                 new Claim(ClaimTypes.Role, role),
-                new Claim("token_type", "employee") // Маркер типа токена
+                new Claim("token_type", "employee")
             ];
 
             return GenerateJwtToken(claims);

@@ -6,13 +6,8 @@
         public int PageSize { get; set; } = 20; 
         public string? SortBy { get; set; } = "Id"; 
         public bool SortAscending { get; set; } = true;
-
-        // БАГ 44: поиск по имени (Video.Name / User.Name / Employee.UserName) и по тексту (Comment.Text).
-        // Пустые/null значения фильтры отключают.
         public string? SearchName { get; set; }
         public string? SearchText { get; set; }
-
-        // БАГ 45: фильтр логов по типу. Допустимые значения ограничены CHECK-констрейнтом: "INSERT"/"UPDATE"/"DELETE".
         public string? ActionType { get; set; }
     }
 
