@@ -1,7 +1,6 @@
 ﻿using Amazon.S3.Model;
 using MainServer.Interfaces;
 using MainServer.Services.ForService;
-using SharedLib.Contracts.Request.Video;
 using SharedLib.Models;
 
 namespace MainServer.Services.ForController;
@@ -29,22 +28,26 @@ public class StorageService : IStorageService
         Directory.CreateDirectory(_tempPath);
     }
 
-    public async Task<StorageUploadResult> UploadToStorageAsync(VideoUploadRequest request, int authorId, string tempFilePath)
+    public async Task<StorageUploadResult> UploadToStorageAsync(string tempVideoPath, string? tempPosterPath = null)
     {
         //Проверка что временный файл видео есть в директории
-        if (!File.Exists(tempFilePath))
-            throw new FileNotFoundException($"Видео не найдено: {tempFilePath}");
+        if (!File.Exists(tempVideoPath))
+            throw new FileNotFoundException($"Видео не найдено: {tempVideoPath}");
 
         //Определение расширения и создание полного пути с нужным расширением
-        var videoExt = Path.GetExtension(tempFilePath);
+        var videoExt = Path.GetExtension(tempVideoPath);
         var videoKey = _paths.BuildVideoKey(videoExt);
 
         //Асинхронная загрузка видео в облачное хранилище
-        await _s3.UploadFileAsync(tempFilePath, videoKey, GetMime(videoExt));
+        await _s3.UploadFileAsync(tempVideoPath, videoKey, GetMime(videoExt));
 
-        //Извлечение постера из видео
-        var posterPath = await _posterService.ExtractPoster(tempFilePath);
-        string posterKey = null!; 
+        //Постер: если передан готовый файл — используем его, иначе извлекаем кадр из видео
+        bool posterIsExtracted = string.IsNullOrEmpty(tempPosterPath);
+        var posterPath = posterIsExtracted
+            ? await _posterService.ExtractPoster(tempVideoPath)
+            : tempPosterPath!;
+
+        string posterKey;
         try
         {
             var posterExt = Path.GetExtension(posterPath);
@@ -53,8 +56,10 @@ public class StorageService : IStorageService
         }
         finally
         {
-            //Удаление временного файла после окончания загрузки
-            if (File.Exists(posterPath))
+            //Удаляем только извлечённый нами постер и никогда — placeholder
+            if (posterIsExtracted
+                && !_posterService.IsPlaceholder(posterPath)
+                && File.Exists(posterPath))
             {
                 try
                 {

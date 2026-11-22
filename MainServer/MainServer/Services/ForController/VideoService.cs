@@ -357,7 +357,7 @@ namespace MainServer.Services.ForController
             if (request.Video.Length > maxFileSize)
                 throw new ApiException(ErrorType.Conflict, $"Файл слишком большой. Максимальный размер 2GB");
 
-            string tempDir = _configuration["VideoStorage:TempPath"] ?? "/MainServer/temp_videos";
+            string tempDir = _configuration["VideoStorage"] ?? "/MainServer/temp_videos";
             Directory.CreateDirectory(tempDir);
             string tempFileName = $"{Guid.NewGuid()}{extension}";
             string tempFilePath = Path.Combine(tempDir, tempFileName);
@@ -378,7 +378,7 @@ namespace MainServer.Services.ForController
 
                 try
                 {
-                    var uploadResult = await _storageService.UploadToStorageAsync(request, AuthorId, tempFilePath);
+                    var uploadResult = await _storageService.UploadToStorageAsync(tempFilePath);
 
                     var newVideo = new Video
                     {
@@ -426,6 +426,139 @@ namespace MainServer.Services.ForController
                         _logger.LogWarning(ex, "Не удалось удалить временный файл: {TempFilePath}", tempFilePath);
                     }
                 }
+            }
+        }
+
+        /// <summary>
+        /// Загрузка видео из AdminPanel. В отличие от пользовательской загрузки
+        /// автор, дата и признак верификации задаются администратором,
+        /// а постер берётся из переданного файла (если он есть).
+        /// </summary>
+        public async Task<AddRezult> NewVideoFromAdminAsync(AdminVideoUploadRequest request)
+        {
+            if (request == null)
+                throw new ApiException(ErrorType.ValidationError, "Запрос не может быть пустым");
+
+            if (request.Video == null || request.Video.Length == 0)
+                throw new ApiException(ErrorType.ValidationError, "Файл видео не выбран");
+
+            if (string.IsNullOrWhiteSpace(request.Name))
+                throw new ApiException(ErrorType.ValidationError, "Название видео обязательно");
+
+            if (request.AuthorId <= 0)
+                throw new ApiException(ErrorType.ValidationError, "Не указан автор видео");
+
+            var videoExtension = Path.GetExtension(request.Video.FileName).ToLowerInvariant();
+            if (videoExtension != ".mp4")
+                throw new ApiException(ErrorType.ValidationError, "Неподдерживаемый формат видео. Разрешён только .mp4");
+
+            string? posterExtension = null;
+            if (request.Poster != null && request.Poster.Length > 0)
+            {
+                posterExtension = Path.GetExtension(request.Poster.FileName).ToLowerInvariant();
+                var allowedPosterExtensions = new[] { ".jpg", ".jpeg", ".png" };
+                if (!allowedPosterExtensions.Contains(posterExtension))
+                    throw new ApiException(ErrorType.ValidationError,
+                        $"Неподдерживаемый формат постера. Разрешены: {string.Join(", ", allowedPosterExtensions)}");
+            }
+
+            var authorExists = await _context.Users.AnyAsync(u => u.Id == request.AuthorId);
+            if (!authorExists)
+                throw new ApiException(ErrorType.NotFound, "Пользователь-автор не найден");
+
+            const long maxFileSize = 2L * 1024 * 1024 * 1024;
+            if (request.Video.Length > maxFileSize)
+                throw new ApiException(ErrorType.Conflict, "Файл слишком большой. Максимальный размер 2GB");
+
+            string tempDir = _configuration["VideoStorage"] ?? "/MainServer/temp_videos";
+            Directory.CreateDirectory(tempDir);
+
+            string tempVideoPath = Path.Combine(tempDir, $"{Guid.NewGuid()}{videoExtension}");
+            string? tempPosterPath = posterExtension == null
+                ? null
+                : Path.Combine(tempDir, $"poster_{Guid.NewGuid()}{posterExtension}");
+
+            try
+            {
+                using (var stream = new FileStream(tempVideoPath, FileMode.CreateNew))
+                    await request.Video.CopyToAsync(stream);
+
+                var videoFileInfo = new FileInfo(tempVideoPath);
+                if (!videoFileInfo.Exists || videoFileInfo.Length == 0)
+                    throw new ApiException(ErrorType.ServerError, "Не удалось сохранить временный файл видео");
+
+                if (tempPosterPath != null && request.Poster != null)
+                {
+                    using var posterStream = new FileStream(tempPosterPath, FileMode.CreateNew);
+                    await request.Poster.CopyToAsync(posterStream);
+
+                    var posterFileInfo = new FileInfo(tempPosterPath);
+                    if (!posterFileInfo.Exists || posterFileInfo.Length == 0)
+                        throw new ApiException(ErrorType.ServerError, "Не удалось сохранить временный файл постера");
+                }
+
+                using var transaction = await _context.Database.BeginTransactionAsync();
+
+                try
+                {
+                    var uploadResult = await _storageService.UploadToStorageAsync(tempVideoPath, tempPosterPath);
+
+                    var newVideo = new Video
+                    {
+                        Name = request.Name.Trim(),
+                        Description = request.Description,
+                        DateUpload = request.DateUpload == default ? DateTime.UtcNow : request.DateUpload,
+                        Link = uploadResult.VideoKey,
+                        Poster = uploadResult.PosterKey,
+                        Likes = request.Likes,
+                        Dislikes = request.Dislikes,
+                        Views = request.Views,
+                        IsVerified = request.IsVerified,
+                        AuthorId = request.AuthorId
+                    };
+
+                    await _context.Videos.AddAsync(newVideo);
+                    var affectedTables = AffectedTableNames();
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    _logger.LogInformation("Видео загружено администратором. ID: {VideoId}, Автор: {AuthorId}",
+                        newVideo.Id, newVideo.AuthorId);
+
+                    return new AddRezult(affectedTables, true);
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw; // Пробрасываем исключение дальше для middleware
+                }
+            }
+            catch (Exception ex) when (ex is not ApiException)
+            {
+                _logger.LogError(ex, "Неожиданная ошибка при загрузке видео администратором");
+                throw new ApiException(ErrorType.ServerError, "Внутренняя ошибка сервера");
+            }
+            finally
+            {
+                DeleteTempFile(tempVideoPath);
+                if (tempPosterPath != null)
+                    DeleteTempFile(tempPosterPath);
+            }
+        }
+
+        private void DeleteTempFile(string path)
+        {
+            if (!File.Exists(path))
+                return;
+
+            try
+            {
+                File.Delete(path);
+                _logger.LogDebug("Временный файл удалён: {TempFilePath}", path);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Не удалось удалить временный файл: {TempFilePath}", path);
             }
         }
 

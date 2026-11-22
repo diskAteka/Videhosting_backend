@@ -17,6 +17,25 @@ namespace MainServer.Services.ForController
             Directory.CreateDirectory(_outputDirectory);
         }
 
+        /// <summary>
+        /// Проверяет, что путь указывает на placeholder-изображение,
+        /// которое является общим ресурсом приложения и не должно удаляться.
+        /// </summary>
+        public bool IsPlaceholder(string path)
+        {
+            try
+            {
+                return string.Equals(
+                    Path.GetFullPath(path),
+                    Path.GetFullPath(_placeholderPath),
+                    StringComparison.OrdinalIgnoreCase);
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
         public async Task<string> ExtractPoster(string videoPath)
         {
             if (!File.Exists(videoPath))

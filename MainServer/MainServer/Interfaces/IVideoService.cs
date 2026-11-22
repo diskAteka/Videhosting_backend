@@ -16,6 +16,7 @@ namespace MainServer.Interfaces
         public Task<List<CommentResponse>> GetCommentsAsync(int videoId);
         public Task<Video> GetVideoMetadataAsync(int videoId);
         public Task<int> NewVideoAsync(VideoUploadRequest request, int AuthorId);
+        public Task<AddRezult> NewVideoFromAdminAsync(AdminVideoUploadRequest request);
         public Task<List<UserVideoListItemDto>> GetThisUserVideos(int userId);
         public Task<List<GetVideoResponse>> GetUnverifiedVideosAsync(QueryParameters parameters);
         public Task<DeleteResult> DeleteVideoAsync(int videoId);

@@ -1,10 +1,9 @@
-﻿using AutoMapper;
+﻿using Amazon.S3;
+using AutoMapper;
 using MainServer.Contracts;
 using MainServer.Enum;
 using MainServer.Interfaces;
-using MainServer.Services;
 using MainServer.Services.Main;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SharedLib.Contracts.Admin;
 using SharedLib.Interfaces;
@@ -219,6 +218,19 @@ namespace MainServer.Controllers
         {
             var request = _mapper.Map<Video>(video);
             var response = await _addObjectService.AddAsync(request);
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Загрузка видео из AdminPanel: файлы уходят на сервер, он сам
+        /// кладёт видео и постер в облачное хранилище.
+        /// </summary>
+        [Route("add/video/upload")]
+        [HttpPost]
+        [RequireRole(UserRole.Admin)]
+        public async Task<IActionResult> AddVideoUpload([FromForm] AdminVideoUploadRequest request)
+        {
+            var response = await _videoService.NewVideoFromAdminAsync(request);
             return Ok(response);
         }
 
@@ -553,8 +565,42 @@ namespace MainServer.Controllers
         public async Task<IActionResult> GetPoster([FromRoute] int videoId)
         {
             var video = await _videoService.GetVideoMetadataAsync(videoId);
-            var response = await _storageService.GetObjectAsync(_bucketName, video.Poster);
-            return new FileStreamResult(response.ResponseStream, response.Headers.ContentType ?? "image/jpeg");
+
+            // Старые записи хранят локальные пути (C:\...) или несуществующий /posters/default.jpg.
+            // Такие значения ключами в хранилище быть не могут — в S3 не ходим, отдаём 404.
+            if (!IsStorageKey(video.Poster, "posters"))
+            {
+                _logger.LogWarning("Некорректный ключ постера в БД: «{Poster}» (videoId={VideoId})", video.Poster, videoId);
+                return NotFound();
+            }
+
+            try
+            {
+                var response = await _storageService.GetObjectAsync(_bucketName, video.Poster);
+                return new FileStreamResult(response.ResponseStream, response.Headers.ContentType ?? "image/jpeg");
+            }
+            catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound || ex.ErrorCode == "NoSuchKey")
+            {
+                // Объект удалён из хранилища или запись устарела — постера просто нет.
+                _logger.LogWarning("Постер отсутствует в хранилище: {Poster} (videoId={VideoId})", video.Poster, videoId);
+                return NotFound();
+            }
+        }
+
+        /// <summary>
+        /// Проверяет, что значение из БД похоже на ключ объекта в хранилище
+        /// с ожидаемым префиксом (например, "posters/{guid}.jpg").
+        /// </summary>
+        private static bool IsStorageKey(string? value, string prefix)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return false;
+
+            // Локальные пути Windows (C:\...), UNC и любые абсолютные пути ключами не являются
+            if (value.Contains('\\') || value.Contains(':') || value.StartsWith('/'))
+                return false;
+
+            return value.StartsWith($"{prefix}/", StringComparison.OrdinalIgnoreCase);
         }
 
         #endregion

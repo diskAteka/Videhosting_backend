@@ -78,12 +78,14 @@ builder.Services.AddCors(options =>
     });
 });
 
-var maxRequestBodySize = 2L * 1024 * 1024 * 1024; 
+// Лимит тела запроса: видео до 2 ГБ + постер и служебные поля multipart
+var maxRequestBodySize = 2L * 1024 * 1024 * 1024 + 128L * 1024 * 1024;
 builder.Services.Configure<FormOptions>(options =>
 {
     options.ValueLengthLimit = int.MaxValue;
     options.MultipartBodyLengthLimit = maxRequestBodySize;
-    options.MemoryBufferThreshold = int.MaxValue;
+    // Крупные multipart-тела должны сбрасываться на диск, а не буферизоваться в памяти
+    options.MemoryBufferThreshold = 64 * 1024;
 });
 builder.WebHost.ConfigureKestrel(options =>
 {
